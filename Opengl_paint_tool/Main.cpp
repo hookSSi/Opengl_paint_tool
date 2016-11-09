@@ -24,9 +24,10 @@ bool keys[256]; // 키보드 루틴에 사용하는 배열
 bool active = TRUE; // 윈도우 활성화 플래그, 디폴트값은 TRUE
 bool fullscreen = TRUE; // 전체화면 플래그, 디폴트값은 TRUE
 
-Circle circle(10); // 원 클래스 인스턴스
-int mode = 0; // 모드
-DWORD time; // 걸린시간
+Circle circle(20); // 원 클래스 인스턴스
+int mode = 1; // 모드
+float time = 0; // 걸린시간
+wchar_t buffer[256]; // 문자열 버퍼
 
 LRESULT CALLBACK WndProc(
 	HWND hwnd, // 이 창의 핸들 
@@ -75,7 +76,7 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	여기에 드로잉 코드를 넣는 걸로...
 	*/
 	
-	time = circle.Draw(0, 0, mode); // Bresenham 알고리즘
+	time = circle.Draw(0, 0, mode);
 
 	glLoadIdentity(); // 현재 모델뷰 행렬을 리셋
 	return TRUE; // 무사히 마침
@@ -360,22 +361,6 @@ BOOL KeyboardInputManager()
 			return 0;                // 창이 만들어지지 않았다면 종료한다
 		}
 	}
-	if (keys['1'])
-	{
-		mode = 0;
-	}
-	if (keys['2'])
-	{
-		mode = 1;
-	}
-	if (keys['3'])
-	{
-		mode = 2;
-	}
-	if (keys[VK_SPACE])
-	{
-		std::wstringstream stream();
-	}
 }
 
 int WINAPI WinMain(
@@ -422,10 +407,27 @@ int WINAPI WinMain(
 				{
 					done = TRUE;
 				}
-				else // 화면 업데이트
+				else if (keys['1'] || keys['2'] || keys['3'])// 화면 업데이트
 				{
+					if (keys['1'])
+					{
+						mode = 0;
+					}
+					else if (keys['2'])
+					{
+						mode = 1;
+					}
+					else if (keys['3'])
+					{
+						mode = 2;
+					}
+
 					DrawGLScene(); // 장면을 그린다
 					SwapBuffers(hDC); // 버퍼를 스와핑한다 (더블 버퍼링)
+
+					swprintf_s(buffer, 256, L"%f초", time);
+					MessageBox(NULL, buffer, TEXT("수행시간 확인"), MB_OK);
+					keys['1'] = false; keys['2'] = false; keys['3'] = false;
 				}
 
 				KeyboardInputManager();

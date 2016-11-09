@@ -15,7 +15,7 @@ private:
 public:
 	Circle(){ Circle::Circle(1); }
 	Circle(int _radius){ SetRadius(_radius); }
-	DWORD Draw(float x, float y, int mode);
+	float Draw(float x, float y, int mode);
 	void SetRadius(int _radius){ radius = _radius; }
 	int GetRadius(){ return radius; }
 };

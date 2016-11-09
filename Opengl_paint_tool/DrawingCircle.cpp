@@ -100,9 +100,13 @@ void Bresenham(const int radius, const int positionX, const int positionY)
 	glFlush();
 }
 
-DWORD Circle::Draw(float positionX, float positionY, int mode)
+float Circle::Draw(float positionX, float positionY, int mode)
 {
-	DWORD dwStartTime = timeGetTime();
+	__int64 freq, start, end;
+	float fgap;
+	QueryPerformanceFrequency((LARGE_INTEGER*)(&freq));
+
+	QueryPerformanceCounter((LARGE_INTEGER*)&start);
 
 	switch (mode)
 	{
@@ -117,7 +121,9 @@ DWORD Circle::Draw(float positionX, float positionY, int mode)
 		break;
 	}
 
-	DWORD dwEndTime = timeGetTime();
+	QueryPerformanceCounter((LARGE_INTEGER*)&end);
 
-	return (dwEndTime - dwStartTime);
+	fgap = (float)(end - start) / freq;
+
+	return fgap;
 }
