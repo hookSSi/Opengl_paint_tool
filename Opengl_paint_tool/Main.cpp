@@ -409,15 +409,15 @@ int WINAPI WinMain(
 				}
 				else if (keys['1'] || keys['2'] || keys['3'])// 화면 업데이트
 				{
-					if (keys['1'])
+					if (keys['1']) // 직교 좌표계
 					{
 						mode = 0;
 					}
-					else if (keys['2'])
+					else if (keys['2']) // 극 좌표계
 					{
 						mode = 1;
 					}
-					else if (keys['3'])
+					else if (keys['3']) // 브레스암 알고리즘
 					{
 						mode = 2;
 					}
