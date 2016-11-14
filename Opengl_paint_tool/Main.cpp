@@ -2,6 +2,8 @@
 
 // 윈도우 헤더파일
 #include<Windows.h> 
+// 리소스 파일
+#include "resource.h"
 // C++ 라이브러리
 #include<iostream>
 // OpenGL 헤더파일
@@ -15,6 +17,8 @@
 #include "DrawingCircle.h"
 #include "Debug.h"
 
+const LPCWSTR PROGRAMNAME = TEXT("PaintHook");
+
 HGLRC hRC = NULL; // 랜더링 컨텍스트
 HDC hDC = NULL; // GDI 장치 컨텍스트
 HWND hWnd = NULL; // 윈도우 핸들
@@ -24,9 +28,6 @@ bool keys[256]; // 키보드 루틴에 사용하는 배열
 bool active = TRUE; // 윈도우 활성화 플래그, 디폴트값은 TRUE
 bool fullscreen = TRUE; // 전체화면 플래그, 디폴트값은 TRUE
 
-Circle circle(20); // 원 클래스 인스턴스
-int mode = 1; // 모드
-float time = 0; // 걸린시간
 wchar_t buffer[256]; // 문자열 버퍼
 
 LRESULT CALLBACK WndProc(
@@ -75,9 +76,6 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	/*
 	여기에 드로잉 코드를 넣는 걸로...
 	*/
-	
-	time = circle.Draw(0, 0, mode);
-
 	glLoadIdentity(); // 현재 모델뷰 행렬을 리셋
 	return TRUE; // 무사히 마침
 }
@@ -144,7 +142,7 @@ BOOL CreateGLWindow(LPCWSTR title, int width, int height, int bits, bool fullScr
 	windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION); // 최소화 아이콘
 	windowClass.hCursor = LoadCursor(NULL, IDC_ARROW); // 마우스 커서 
 	windowClass.hbrBackground = NULL; // 윈도우 배경색
-	windowClass.lpszMenuName = NULL; // 사용할 메뉴
+	windowClass.lpszMenuName = MAKEINTRESOURCE(MENU1); // 사용할 메뉴
 	windowClass.lpszClassName = TEXT("MyClass"); // 윈도우 클래스의 이름
 	windowClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
 
@@ -331,6 +329,24 @@ LRESULT CALLBACK WndProc(
 			keys[wParam] = TRUE;
 			return 0;
 		}
+		case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
+			{
+			case MENU1_OPEN:
+				Debug::Log(TEXT("열기"));
+				return 0;
+			case MENU1_SAVE:
+				Debug::Log(TEXT("저장"));
+				return 0;
+			case MENU1_SAVE_ANOTHER_NAME:
+				Debug::Log(TEXT("다른 이름으로 저장"));
+				return 0;
+			case MENU1_EXIT:
+				PostQuitMessage(0); // 종료 메시지를 보냄
+				return 0;
+			}
+		}
 		case WM_KEYUP: // 키가 더이상 눌리지 않는 경우
 		{
 			keys[wParam] = FALSE;
@@ -356,7 +372,7 @@ BOOL KeyboardInputManager()
 		KillGLWindow();                    // 현재 창을 죽인다.
 		fullscreen = !fullscreen;                // 전체화면/창모드 전환
 		// OpenGL 창을 다시 만든다
-		if (!CreateGLWindow(TEXT("OpenGL Framework"), 640, 480, 16, fullscreen))
+		if (!CreateGLWindow(PROGRAMNAME, 640, 480, 16, fullscreen))
 		{
 			return 0;                // 창이 만들어지지 않았다면 종료한다
 		}
@@ -378,7 +394,7 @@ int WINAPI WinMain(
 		fullscreen = FALSE;                        // Windowed Mode
 	}
 
-	if (!CreateGLWindow(TEXT("OpenGL Framework"), 640, 480, 16, fullscreen))
+	if (!CreateGLWindow(PROGRAMNAME, 640, 480, 16, fullscreen))
 	{
 		return 0;
 	}
@@ -409,25 +425,8 @@ int WINAPI WinMain(
 				}
 				else if (keys['1'] || keys['2'] || keys['3'])// 화면 업데이트
 				{
-					if (keys['1']) // 직교 좌표계
-					{
-						mode = 0;
-					}
-					else if (keys['2']) // 극 좌표계
-					{
-						mode = 1;
-					}
-					else if (keys['3']) // 브레스암 알고리즘
-					{
-						mode = 2;
-					}
-
 					DrawGLScene(); // 장면을 그린다
 					SwapBuffers(hDC); // 버퍼를 스와핑한다 (더블 버퍼링)
-
-					swprintf_s(buffer, 256, L"%f초", time);
-					MessageBox(NULL, buffer, TEXT("수행시간 확인"), MB_OK);
-					keys['1'] = false; keys['2'] = false; keys['3'] = false;
 				}
 
 				KeyboardInputManager();

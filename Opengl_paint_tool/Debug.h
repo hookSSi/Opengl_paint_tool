@@ -1,6 +1,20 @@
+#ifndef __DEBUG_H_
+#define __DEBUG_H_
+
 #include<Windows.h>
 
-void DebugLog(LPCWSTR string)
+namespace Debug
 {
-	MessageBox(NULL, string, TEXT("Debug"), MB_OK | MB_ICONSTOP);
+	void Log(wchar_t* buffer, float value)
+	{
+		swprintf_s(buffer, 256, L"%f", value);
+
+		MessageBox(NULL, buffer, TEXT("Debug"), MB_OK);
+	}
+	void Log(LPCWSTR str)
+	{
+		MessageBox(NULL, str, TEXT("Debug"), MB_OK);
+	}
 }
+
+#endif

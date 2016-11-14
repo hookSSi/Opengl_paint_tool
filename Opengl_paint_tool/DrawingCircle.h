@@ -1,3 +1,6 @@
+#ifndef __DRAWING_CIRCLE_H_
+#define __DRAWING_CIRCLE_H_
+
 // OpenGL 헤더파일
 #include <GL/glut.h> 
 // OpenGL 유틸리티
@@ -19,3 +22,5 @@ public:
 	void SetRadius(int _radius){ radius = _radius; }
 	int GetRadius(){ return radius; }
 };
+
+#endif
