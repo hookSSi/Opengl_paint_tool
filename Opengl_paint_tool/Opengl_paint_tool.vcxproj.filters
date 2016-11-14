@@ -21,12 +21,18 @@
     <ClCompile Include="DrawingCircle.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="GridMap.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawingCircle.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Debug.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GridMap.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
