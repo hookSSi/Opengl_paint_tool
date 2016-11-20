@@ -1,0 +1,5 @@
+﻿  Main.cpp
+c:\users\문\desktop\painttool\painttool\painttool\main.cpp(150): warning C4553: '==': operator has no effect; did you intend '='?
+c:\users\문\desktop\painttool\painttool\painttool\main.cpp(310): warning C4101: 'paintStruct': unreferenced local variable
+  PaintTool.vcxproj -> C:\Users\문\Desktop\PaintTool\PaintTool\Debug\PaintTool.exe
+  PaintTool.vcxproj -> C:\Users\문\Desktop\PaintTool\PaintTool\Debug\PaintTool.pdb (Full PDB)

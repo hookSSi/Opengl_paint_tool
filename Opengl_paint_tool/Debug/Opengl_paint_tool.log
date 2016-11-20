@@ -1,6 +1,0 @@
-﻿  Main.cpp
-c:\users\문\desktop\opengl_paint_tool\opengl_paint_tool\main.cpp(133): warning C4553: '==': operator has no effect; did you intend '='?
-c:\users\문\desktop\opengl_paint_tool\opengl_paint_tool\main.cpp(293): warning C4101: 'paintStruct': unreferenced local variable
-c:\users\문\desktop\opengl_paint_tool\opengl_paint_tool\main.cpp(380): warning C4715: 'KeyboardInputManager': not all control paths return a value
-  Opengl_paint_tool.vcxproj -> C:\Users\문\Desktop\Opengl_paint_tool\Debug\Opengl_paint_tool.exe
-  Opengl_paint_tool.vcxproj -> C:\Users\문\Desktop\Opengl_paint_tool\Debug\Opengl_paint_tool.pdb (Full PDB)
