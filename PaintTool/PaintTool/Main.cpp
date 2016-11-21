@@ -18,7 +18,7 @@
 #include "FileHandle.h"
 #include "Layer.h"
 #include "Debug.h"
-#include "DrawingCircle.h"
+#include "Drawing.h"
 
 const LPCWSTR PROGRAMNAME = TEXT("PaintHook"); // 프로그램 이름
 
@@ -47,7 +47,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크
 		height = 1;
 	}
 
-	glViewport(0, 0, width, height); // 현 뷰포트를 리셋
+	glViewport(0, 0, width, height); // 현재 뷰포트를 리셋
 
 	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
 	glLoadIdentity(); // 투영행렬을 리셋한다
@@ -62,7 +62,7 @@ int InitGL(GLvoid)
 {
 	glShadeModel(GL_SMOOTH); // 부드러운 쉐이딩을 설정한다
 
-	glClearColor(1.0f, 1.0f, 1.0f, 0.0f); // 배경색 설정
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 배경색 설정
 
 	glClearDepth(1.0f); // 깊이버퍼 설정
 	glEnable(GL_DEPTH_TEST); // 깊이테스트를 킴
@@ -79,18 +79,19 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	glLoadIdentity();
 	
 	gluLookAt(0.0, 0.0, 10.0,
-		0.0, 0.0, -1.0,
+		0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0);
-
 
 	/*
 	여기에 드로잉 코드를 넣는 걸로...
 	*/
 
-	Circle circle(2);
-	circle.transform.position = Vector3(1, 0, -10);
+	Drawing::Rectangle rectangle(Vector2(-3,-1));
 
-	circle.Draw(1);
+	rectangle.endPoint = Vector2(5, 10);
+
+	rectangle.color = Color(1, 1,1, 1);
+	rectangle.Draw();
 
 	//Debug::Circle();
 
@@ -364,20 +365,6 @@ LRESULT CALLBACK WndProc(
 					wsprintf(buffer, TEXT("%s 파일을 선택했습니다."), OFN.lpstrFile);
 					MessageBox(hWnd, buffer, TEXT("파일 열기 성공"), MB_OK);
 					BMP::LoadBmp(OFN.lpstrFile, &imageBuffer);
-
-					//if ()
-					//{
-					//	AUX_RGBImageRec *texRec[2];
-					//	memset(texRec, 0, sizeof(AUX_RGBImageRec *));
-
-					//	glGenTextures(3, &texture[0]); //
-					//	glBindTexture(GL_TEXTURE_2D, texture[0]); //texture[0]은 지역변수로 해당 클래스 헤더파일에 GLuint texture[1]; 선언됨.
-
-					//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					//	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texRec[0]->sizeX, texRec[0]->sizeY, GL_RGB,
-					//		GL_UNSIGNED_BYTE, texRec[0]->data);
-					//}
 				}
 				return 0;
 			case MENU1_SAVE:

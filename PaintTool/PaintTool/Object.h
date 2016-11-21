@@ -2,6 +2,7 @@
 #define __OBJECT_H_
 
 #include "Vector.h"
+#include "Color.h"
 #include <gl/glut.h>
 
 class Transform
@@ -27,6 +28,7 @@ class Object
 {
 public:
 	Transform transform;
+	Color color;
 
 	Object() {};
 	Object(const Object& other);

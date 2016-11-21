@@ -150,8 +150,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Button.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="Debug.h" />
-    <ClInclude Include="DrawingCircle.h" />
+    <ClInclude Include="Drawing.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="Layer.h" />
     <ClInclude Include="Object.h" />
@@ -161,7 +162,8 @@
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DrawingCircle.cpp" />
+    <ClCompile Include="Color.cpp" />
+    <ClCompile Include="Drawing.cpp" />
     <ClCompile Include="GridMap.cpp" />
     <ClCompile Include="Layer.cpp" />
     <ClCompile Include="Main.cpp" />

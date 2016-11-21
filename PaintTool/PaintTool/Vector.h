@@ -4,9 +4,10 @@
 class Vector2
 {
 public:
-	float x = 0, y = 0;
+	float x, y;
 
 	Vector2(float _x = 0, float _y = 0) :x(_x), y(_y) {};
+	Vector2(const Vector2& _vector2) { x = _vector2.x; y = _vector2.y; }
 
 	~Vector2() {};
 
@@ -27,10 +28,11 @@ public:
 class Vector3 : public Vector2
 {
 public:
-	float z = 0;
+	float z;
 
 	Vector3(float _x = 0, float _y = 0, float _z = 0) :Vector2(_x,_y), z(_z) {};
 	explicit Vector3(const Vector2& _vector2) { x = _vector2.x; y = _vector2.y; z = 0; }
+	Vector3(const Vector3& _vector3) { x = _vector3.x; y = _vector3.y; z = _vector3.z; }
 
 	~Vector3() {};
 

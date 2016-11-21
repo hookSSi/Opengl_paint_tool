@@ -47,9 +47,6 @@
     <ClInclude Include="Button.h">
       <Filter>Header Files\Menu</Filter>
     </ClInclude>
-    <ClInclude Include="DrawingCircle.h">
-      <Filter>Header Files\Drawing</Filter>
-    </ClInclude>
     <ClInclude Include="FileHandle.h">
       <Filter>Header Files\File</Filter>
     </ClInclude>
@@ -65,11 +62,14 @@
     <ClInclude Include="Layer.h">
       <Filter>Header Files\Drawing</Filter>
     </ClInclude>
+    <ClInclude Include="Drawing.h">
+      <Filter>Header Files\Drawing</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Header Files\Drawing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DrawingCircle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GridMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -83,6 +83,12 @@
       <Filter>Source Files\Drawing</Filter>
     </ClCompile>
     <ClCompile Include="Object.cpp">
+      <Filter>Source Files\Drawing</Filter>
+    </ClCompile>
+    <ClCompile Include="Drawing.cpp">
+      <Filter>Source Files\Drawing</Filter>
+    </ClCompile>
+    <ClCompile Include="Color.cpp">
       <Filter>Source Files\Drawing</Filter>
     </ClCompile>
   </ItemGroup>

@@ -42,6 +42,7 @@ bool Transform::operator!=(const Transform& _transform) const
 Object::Object(const Object& other)
 {
 	this->transform = other.transform;
+	this->color = other.color;
 }
 
 Object& Object::operator=(const Object& other)
@@ -49,6 +50,7 @@ Object& Object::operator=(const Object& other)
 	if (this != &other)
 	{
 		this->transform = other.transform;
+		this->color = other.color;
 	}
 
 	return *this;
@@ -63,4 +65,6 @@ void Object::Draw()
 	glRotatef(transform.rotation.x, 1.0f, 0.0f, 0.0f); // x축 회전
 	glRotatef(transform.rotation.y, 0.0f, 1.0f, 0.0f); // y축 회전
 	glRotatef(transform.rotation.z, 0.0f, 0.0f, 1.0f); // z축 회전
+
+	glColor4f(color.r, color.g, color.b, color.a);
 }
