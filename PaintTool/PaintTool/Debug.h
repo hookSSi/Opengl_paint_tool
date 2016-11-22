@@ -39,10 +39,8 @@ namespace Debug
 
 	void Circle()
 	{
-		glLoadIdentity();
-		glTranslatef(0, 0, -10);
-		glScalef(2, 2, 2);
-		int radius = 2;
+		glScalef(1, 1, 1);
+		int radius = 1;
 
 		glColor3f(0.0f, 1.0f, 0.0f); // ÃÊ·Ï»ö
 

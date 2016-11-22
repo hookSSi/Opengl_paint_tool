@@ -33,6 +33,12 @@ bool fullscreen = TRUE; // 전체화면 플래그, 디폴트값은 TRUE
 
 wchar_t buffer[256]; // 문자열 버퍼
 
+GLdouble ww = 640; // 너비 
+GLdouble wh = 480; // 높이
+
+GLdouble pixelWidth = 640;
+GLdouble pixelHeight = 480;
+
 LRESULT CALLBACK WndProc(
 	HWND hwnd, // 이 창의 핸들
 	UINT message, // 이 창의 메시지
@@ -42,33 +48,26 @@ LRESULT CALLBACK WndProc(
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크기를 조정한다.
 {
-	if (height == 0) // 0으로 나누기 방지
-	{
-		height = 1;
-	}
+	glViewport(0.0, height / 2, pixelWidth, pixelHeight); // 고정 시켜 주세요
 
-	glViewport(0, 0, width, height); // 현재 뷰포트를 리셋
+	GLdouble widthFactor = width / 2 / ww;
+	GLdouble heightFactor = height / 2 / wh;
 
 	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
 	glLoadIdentity(); // 투영행렬을 리셋한다
+	glOrtho(-1.0 * widthFactor, 1.0 * widthFactor, -1.0 * heightFactor, 1.0 * heightFactor,-1.0, 1.0);
 
-	gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f); // 창의 비율을 계산
-
-	glMatrixMode(GL_MODELVIEW); // 모델뷰 행렬을 선택
-	glLoadIdentity(); // 모델뷰 행렬을 리셋한다
+	ww = width;
+	wh = height;
 }
 
 int InitGL(GLvoid)
 {
-	glShadeModel(GL_SMOOTH); // 부드러운 쉐이딩을 설정한다
+	ReSizeGLScene(ww, wh);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 배경색 설정
-
-	glClearDepth(1.0f); // 깊이버퍼 설정
-	glEnable(GL_DEPTH_TEST); // 깊이테스트를 킴
-	glDepthFunc(GL_LEQUAL); // 수행할 깊이테스트의 종류
-
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // 정말로 근사한 원근 계산
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glFlush();
 
 	return TRUE; // 초기화가 무사히 끝났음
 }
@@ -78,24 +77,34 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 화면과 깊이버퍼를 비움
 	glLoadIdentity();
 	
-	gluLookAt(0.0, 0.0, 10.0,
-		0.0, 0.0, 0.0,
+	gluLookAt(0.0, 0.0, 1.0,
+		0.0, 0.0, -1.0,
 		0.0, 1.0, 0.0);
 
 	/*
 	여기에 드로잉 코드를 넣는 걸로...
 	*/
 
-	Drawing::Rectangle rectangle(Vector2(-3,-1));
+	/*Drawing::Rectangle rectangle(Vector2(-3,-1));
 
 	rectangle.endPoint = Vector2(5, 10);
 
 	rectangle.color = Color(1, 1,1, 1);
-	rectangle.Draw();
+	rectangle.Draw();*/
 
-	//Debug::Circle();
+	Debug::Circle();
 
 	return TRUE; // 무사히 마침
+}
+
+void MouseInput()
+{
+
+}
+
+void KeyboardInput()
+{
+
 }
 
 GLvoid KillGLWindow(GLvoid) // 프로그램이 종료되기 바로 직전 실행됨
