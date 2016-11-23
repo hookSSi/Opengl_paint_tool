@@ -163,6 +163,7 @@
     <ClInclude Include="FileHandle.h" />
     <ClInclude Include="GridMap.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Util.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>

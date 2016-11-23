@@ -19,6 +19,7 @@
 #include "Layer.h"
 #include "Debug.h"
 #include "Drawing.h"
+#include "Util.h"
 
 const LPCWSTR PROGRAMNAME = TEXT("PaintHook"); // 프로그램 이름
 
@@ -39,6 +40,9 @@ GLdouble wh = 480; // 높이
 GLdouble pixelWidth = 640;
 GLdouble pixelHeight = 480;
 
+BITMAPINFOHEADER bitmapInfoHeader;
+unsigned char* bitmapData;
+
 LRESULT CALLBACK WndProc(
 	HWND hwnd, // 이 창의 핸들
 	UINT message, // 이 창의 메시지
@@ -48,14 +52,14 @@ LRESULT CALLBACK WndProc(
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크기를 조정한다.
 {
-	glViewport(0.0, height / 2, pixelWidth, pixelHeight); // 고정 시켜 주세요
-
-	GLdouble widthFactor = width / 2 / ww;
-	GLdouble heightFactor = height / 2 / wh;
+	glViewport(0.0, 0.0, width, height); // 고정 시켜 주세요
 
 	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
 	glLoadIdentity(); // 투영행렬을 리셋한다
-	glOrtho(-1.0 * widthFactor, 1.0 * widthFactor, -1.0 * heightFactor, 1.0 * heightFactor,-1.0, 1.0);
+	glOrtho(0, width, 0, height, 1.0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	ww = width;
 	wh = height;
@@ -91,8 +95,10 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 
 	rectangle.color = Color(1, 1,1, 1);
 	rectangle.Draw();*/
-
 	Debug::Circle();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glRasterPos2i(100, 100);
+	glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, bitmapData);
 
 	return TRUE; // 무사히 마침
 }
@@ -365,22 +371,19 @@ LRESULT CALLBACK WndProc(
 				memset(&OFN, 0, sizeof(OPENFILENAME));
 				OFN.lStructSize = sizeof(OPENFILENAME);
 				OFN.hwndOwner = hWnd;
-				OFN.lpstrFilter = TEXT("BMP files(*.bmp)\0*.bmp\0PNG(*.png) files\0*.png\0All Files (*.*)\0*.*\0");;
-				OFN.lpstrFile = lpstrFile;
+				OFN.lpstrFilter = TEXT("BMP files(*.bmp)\0*.bmp");;
+				OFN.lpstrFile = BMP::lpstrFile;
 				OFN.nMaxFile = 256;
 				OFN.lpstrInitialDir = TEXT("c:\\");
 				if (GetOpenFileName(&OFN) != 0)
 				{
+					char* temp = Util::ConvertWCtoC(OFN.lpstrFile);
+					bitmapData = BMP::LoadBMP(temp, &bitmapInfoHeader);
 					wsprintf(buffer, TEXT("%s 파일을 선택했습니다."), OFN.lpstrFile);
 					MessageBox(hWnd, buffer, TEXT("파일 열기 성공"), MB_OK);
-					BMP::LoadBmp(OFN.lpstrFile, &imageBuffer);
 				}
 				return 0;
 			case MENU1_SAVE:
-				if (BMP::SaveBmp(TEXT("../ Save_image.bmp"), imageBuffer, 1920, 1080))
-					Debug::Log(TEXT("저장"));
-				else
-					Debug::Log(TEXT("저장 실패"));
 				return 0;
 			case MENU1_SAVE_ANOTHER_NAME:
 				Debug::Log(TEXT("다른 이름으로 저장"));
