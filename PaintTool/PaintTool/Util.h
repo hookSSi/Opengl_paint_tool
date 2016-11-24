@@ -6,7 +6,7 @@
 namespace Util
 {
 	//wchar_t 에서 char 로의 형변환 함수
-	char * ConvertWCtoC(wchar_t* str)
+	char* ConvertWCtoC(wchar_t* str)
 	{
 		//반환할 char* 변수 선언
 		char* pStr;

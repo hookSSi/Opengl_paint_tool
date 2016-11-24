@@ -1,7 +1,6 @@
 /* This program illustrates the use of the glut library for
 interfacing with a window system */
 
-
 #define NULL 0
 #define LINE 1
 #define RECTANGLE 2

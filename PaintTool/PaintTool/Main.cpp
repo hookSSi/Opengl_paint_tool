@@ -14,6 +14,9 @@
 #include<gl/glut.h>
 // OpenGL 보조 함수들
 #include<gl/glaux.h>
+// stirng 헤더
+#include<string>
+#include <commctrl.h>
 
 #include "FileHandle.h"
 #include "Layer.h"
@@ -32,16 +35,21 @@ bool keys[256]; // 키보드 루틴에 사용하는 배열
 bool active = TRUE; // 윈도우 활성화 플래그, 디폴트값은 TRUE
 bool fullscreen = TRUE; // 전체화면 플래그, 디폴트값은 TRUE
 
-wchar_t buffer[256]; // 문자열 버퍼
 
-GLdouble ww = 640; // 너비 
-GLdouble wh = 480; // 높이
+BITMAPINFOHEADER bitmapInfoHeader; // BMP Info Header
 
-GLdouble pixelWidth = 640;
-GLdouble pixelHeight = 480;
+const int MAX_PATH_LENGTH = 40; // 파일 경로 최대 길이
 
-BITMAPINFOHEADER bitmapInfoHeader;
-unsigned char* bitmapData;
+static wchar_t lpstrFile1[MAX_PATH_LENGTH]; // 파일 경로 문자열 버퍼
+static wchar_t lpstrFile2[MAX_PATH_LENGTH];
+
+unsigned char* imagebuffer; // 이미지 데이터 버퍼
+
+int pixelWidth = 640;
+int pixelHeight = 480;
+
+OPENFILENAME OFN; // 열기
+OPENFILENAME SFN; // 저장
 
 LRESULT CALLBACK WndProc(
 	HWND hwnd, // 이 창의 핸들
@@ -52,22 +60,22 @@ LRESULT CALLBACK WndProc(
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크기를 조정한다.
 {
-	glViewport(0.0, 0.0, ww, wh); // 고정 시켜 주세요
+	glViewport(0.0, 0.0, pixelWidth, pixelHeight); // 고정 시켜 주세요
 
-	//glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
-	//glLoadIdentity(); // 투영행렬을 리셋한다
+	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
+	glLoadIdentity(); // 투영행렬을 리셋한다
 	glOrtho(0, width, 0, height, 1.0, 1.0);
 
-	//glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
-
-	//ww = width;
-	//wh = height;
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 int InitGL(GLvoid)
 {
-	ReSizeGLScene(ww, wh);
+	imagebuffer = (unsigned char*)malloc(pixelHeight * pixelWidth * 3);
+	memset(imagebuffer, 0, pixelHeight * pixelWidth * 3);
+
+	ReSizeGLScene(640, 480);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 배경색 설정
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -81,9 +89,9 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 화면과 깊이버퍼를 비움
 	glLoadIdentity();
 	
-	gluLookAt(0.0, 0.0, 1.0,
-		0.0, 0.0, -1.0,
-		0.0, 1.0, 0.0);
+	//gluLookAt(0.0, 0.0, 1.0,
+	//	0.0, 0.0, -1.0,
+	//	0.0, 1.0, 0.0);
 
 	/*
 	여기에 드로잉 코드를 넣는 걸로...
@@ -95,12 +103,15 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 
 	rectangle.color = Color(1, 1,1, 1);
 	rectangle.Draw();*/
-	Drawing::Circle circle(1);
-	circle.color = Color(1, 0, 0, 1);
-	circle.Draw();
+
+	//Drawing::Circle circle(1);
+	//circle.color = Color(1, 0, 0, 1);
+	//circle.Draw();
+
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glRasterPos2i(100, 100);
-	glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, bitmapData);
+	glRasterPos2i(-1, -1);
+
+	glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, imagebuffer);
 
 	return TRUE; // 무사히 마침
 }
@@ -120,6 +131,122 @@ void MouseInput(int winWidth, int winHeight)
 void KeyboardInput()
 {
 
+}
+
+void MenuManager(WPARAM &wParam, LPARAM &lParam)
+{
+	switch (LOWORD(wParam))
+	{
+	case MENU1_OPEN:
+		memset(&OFN, 0, sizeof(OPENFILENAME));
+		OFN.lStructSize = sizeof(OPENFILENAME);
+		OFN.hwndOwner = hWnd;
+		OFN.lpstrFilter = TEXT("BMP files(*.bmp)\0*.bmp");;
+		OFN.lpstrFile = lpstrFile1;
+		OFN.nMaxFile = 256;
+		OFN.lpstrInitialDir = TEXT("c:\\");
+		if (GetOpenFileName(&OFN) != 0)
+		{
+			imagebuffer = BMP::LoadBMP(Util::ConvertWCtoC(OFN.lpstrFile), &bitmapInfoHeader);
+		}
+		return;
+	case MENU1_SAVE:
+		BMP::SaveScreenshot(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight,imagebuffer);
+		return;
+	case MENU1_SAVE_ANOTHER_NAME:
+		memset(&SFN, 0, sizeof(OPENFILENAME));
+		SFN.lStructSize = sizeof(OPENFILENAME);
+		SFN.hwndOwner = hWnd;
+		SFN.lpstrFilter = TEXT("BMP files(*.bmp)\0*.bmp");;
+		SFN.lpstrFile = lpstrFile2;
+		SFN.nMaxFile = 256;
+		SFN.lpstrInitialDir = TEXT(".");
+		if (GetSaveFileName(&SFN) != 0)
+		{
+			glReadPixels(0, 0, bitmapInfoHeader.biWidth * 1, bitmapInfoHeader.biHeight * 1, GL_RGB, GL_UNSIGNED_BYTE, imagebuffer);
+
+			std::string fileName;
+			fileName.append(Util::ConvertWCtoC(SFN.lpstrFile));
+
+			if (strstr(fileName.data(), "bmp") == nullptr)
+			{
+				fileName.append(".bmp");
+			}
+
+			BMP::SaveBMP(fileName.data(), bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, imagebuffer);
+		}
+		return;
+	case MENU1_EXIT:
+		PostQuitMessage(0); // 종료 메시지를 보냄
+		return;
+	}
+}
+
+void CreateToolBoxMenu()
+{
+	INITCOMMONCONTROLSEX initCtrlEx;
+
+	initCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	initCtrlEx.dwICC = ICC_BAR_CLASSES;
+	InitCommonControlsEx(&initCtrlEx);
+
+	TBBUTTON tbrButtons[6];
+
+
+	tbrButtons[0].iBitmap = 0;
+	tbrButtons[0].idCommand = ID_PANCIL;
+	tbrButtons[0].fsState = TBSTATE_ENABLED;
+	tbrButtons[0].fsStyle = TBSTYLE_BUTTON;
+	tbrButtons[0].dwData = 0L;
+	tbrButtons[0].iBitmap = 0;
+	tbrButtons[0].iString = 0;
+
+	tbrButtons[1].iBitmap = 0;
+	tbrButtons[1].idCommand = 0;
+	tbrButtons[1].fsState = TBSTATE_ENABLED;
+	tbrButtons[1].fsStyle = TBSTYLE_SEP;
+	tbrButtons[1].dwData = 0L;
+	tbrButtons[1].iString = 0;
+
+	tbrButtons[2].iBitmap = 1;
+	tbrButtons[2].idCommand = ID_CIRCLE;
+	tbrButtons[2].fsState = TBSTATE_ENABLED;
+	tbrButtons[2].fsStyle = TBSTYLE_BUTTON;
+	tbrButtons[2].dwData = 0L;
+	tbrButtons[2].iString = 0;
+
+	tbrButtons[3].iBitmap = 2;
+	tbrButtons[3].idCommand = ID_RECTANGLE;
+	tbrButtons[3].fsState = TBSTATE_ENABLED;
+	tbrButtons[3].fsStyle = TBSTYLE_BUTTON;
+	tbrButtons[3].dwData = 0L;
+	tbrButtons[3].iString = 0;
+
+	tbrButtons[4].iBitmap = 3;
+	tbrButtons[4].idCommand = ID_TRIANGLE;
+	tbrButtons[4].fsState = TBSTATE_ENABLED;
+	tbrButtons[4].fsStyle = TBSTYLE_BUTTON;
+	tbrButtons[4].dwData = 0L;
+	tbrButtons[4].iString = 0;
+
+	tbrButtons[5].iBitmap = 4;
+	tbrButtons[5].idCommand = ID_CHAR;
+	tbrButtons[5].fsState = TBSTATE_ENABLED;
+	tbrButtons[5].fsStyle = TBSTYLE_BUTTON;
+	tbrButtons[5].dwData = 0L;
+	tbrButtons[5].iString = 0;
+
+	HWND hWndToolbar;
+	hWndToolbar = CreateToolbarEx(hWnd,
+		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		IDR_TOOLBAR1,
+		6,
+		hInstance,
+		IDR_TOOLBAR1,
+		tbrButtons,
+		6,
+		16, 16, 16, 16,
+		sizeof(TBBUTTON));
 }
 
 GLvoid KillGLWindow(GLvoid) // 프로그램이 종료되기 바로 직전 실행됨
@@ -253,6 +380,9 @@ BOOL CreateGLWindow(LPCWSTR title, int width, int height, int bits, bool fullScr
 	}
 
 
+	CreateToolBoxMenu();
+
+
 	static PIXELFORMATDESCRIPTOR pfd = {
 		sizeof(PIXELFORMATDESCRIPTOR), // 구조체의 크기
 		1, // 버전 -> 항상 1로 고정됨
@@ -373,34 +503,8 @@ LRESULT CALLBACK WndProc(
 		}
 		case WM_COMMAND:
 		{
-			switch (LOWORD(wParam))
-			{
-			case MENU1_OPEN:
-				OPENFILENAME OFN;
-				memset(&OFN, 0, sizeof(OPENFILENAME));
-				OFN.lStructSize = sizeof(OPENFILENAME);
-				OFN.hwndOwner = hWnd;
-				OFN.lpstrFilter = TEXT("BMP files(*.bmp)\0*.bmp");;
-				OFN.lpstrFile = BMP::lpstrFile;
-				OFN.nMaxFile = 256;
-				OFN.lpstrInitialDir = TEXT("c:\\");
-				if (GetOpenFileName(&OFN) != 0)
-				{
-					char* temp = Util::ConvertWCtoC(OFN.lpstrFile);
-					bitmapData = BMP::LoadBMP(temp, &bitmapInfoHeader);
-					wsprintf(buffer, TEXT("%s 파일을 선택했습니다."), OFN.lpstrFile);
-					MessageBox(hWnd, buffer, TEXT("파일 열기 성공"), MB_OK);
-				}
-				return 0;
-			case MENU1_SAVE:
-				return 0;
-			case MENU1_SAVE_ANOTHER_NAME:
-				Debug::Log(TEXT("다른 이름으로 저장"));
-				return 0;
-			case MENU1_EXIT:
-				PostQuitMessage(0); // 종료 메시지를 보냄
-				return 0;
-			}
+			MenuManager(wParam,lParam);
+			return 0;
 		}
 		case WM_KEYUP: // 키가 더이상 눌리지 않는 경우
 		{

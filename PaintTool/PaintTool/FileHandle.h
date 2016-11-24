@@ -8,16 +8,14 @@
 #include <list>
 #include <algorithm>
 #include <Commdlg.h>
+#include "Debug.h"
 
 namespace BMP
 {
 	const int BITMAP_ID = 0x4D42;
 
-	const int MAX_PATH_LENGTH = 40; // 파일 경로 최대 길이
-
-	static wchar_t lpstrFile[MAX_PATH_LENGTH]; // 파일 경로 문자열 버퍼
-
 	unsigned char* LoadBMP(char* filename, BITMAPINFOHEADER *bitmapInfoHeader);
+	int SaveBMP(char* filename, int width, int height, unsigned char* imageData);
 
 	unsigned char* LoadBMP(char* filename, BITMAPINFOHEADER *bitmapInfoHeader)
 	{
@@ -28,12 +26,12 @@ namespace BMP
 		unsigned char tempRGB; // temp for changing R, B
 
 							   // Read file as binary
-		filePtr = fopen(filename, "rb"); // Open file for read
+		filePtr = fopen(filename, "rb");
 		if (filePtr == nullptr)
 			return nullptr;
 
 		// Read BMP header
-		fread(&bitmapFileHeader, sizeof(BITMAPCOREHEADER), 1, filePtr);
+		fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER), 1, filePtr);
 
 		if (bitmapFileHeader.bfType != BITMAP_ID)
 		{
@@ -42,7 +40,7 @@ namespace BMP
 		}
 
 		// Read BMP info
-		fread(bitmapInfoHeader, sizeof(BITMAPCOREHEADER), 1, filePtr);
+		fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER), 1, filePtr);
 
 		fseek(filePtr, bitmapFileHeader.bfOffBits, SEEK_SET);
 
@@ -72,9 +70,77 @@ namespace BMP
 			bitmapImage[imageIdx] = bitmapImage[imageIdx + 2];
 			bitmapImage[imageIdx + 2] = tempRGB;
 		}
-		
+
 		fclose(filePtr);
 		return bitmapImage;
+	}
+
+	int SaveBMP(const char* filename, int width, int height, unsigned char* imageData)
+	{
+		FILE* filePtr; // file Pointer
+		BITMAPFILEHEADER bitmapFileHeader; // BMP file header
+		BITMAPINFOHEADER bitmapInfoHeader; // BMP info header
+		int imageIdx; // RGB -> BGR index
+		unsigned char tempRGB;
+
+		// Open file as binary writing
+		filePtr = fopen(filename, "wb");
+		if (!filePtr)
+			return 0;
+
+		// Fill BMP header
+		bitmapFileHeader.bfSize = sizeof(BITMAPFILEHEADER);
+		bitmapFileHeader.bfType = BITMAP_ID;
+		bitmapFileHeader.bfReserved1 = 0;
+		bitmapFileHeader.bfReserved2 = 0;
+		bitmapFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+		// Fill BMP Info header
+		bitmapInfoHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bitmapInfoHeader.biPlanes = 1;
+		bitmapInfoHeader.biBitCount = 24; // 24bits
+		bitmapInfoHeader.biCompression = BI_RGB; // no compressing
+		bitmapInfoHeader.biSizeImage = width * abs(height) * 3; // w *h * (RGB bytes)
+		bitmapInfoHeader.biXPelsPerMeter = 0;
+		bitmapInfoHeader.biYPelsPerMeter = 0;
+		bitmapInfoHeader.biClrUsed = 0;
+		bitmapInfoHeader.biClrImportant = 0;
+		bitmapInfoHeader.biWidth = width;
+		bitmapInfoHeader.biHeight = height;
+
+		for (imageIdx = 0; imageIdx < bitmapInfoHeader.biSizeImage; imageIdx += 3)
+		{
+			tempRGB = imageData[imageIdx];
+			imageData[imageIdx] = imageData[imageIdx + 2];
+			imageData[imageIdx + 2] = tempRGB;
+		}
+
+		// Save BMP file header 
+		fwrite(&bitmapFileHeader, 1, sizeof(BITMAPFILEHEADER), filePtr);
+
+		// Save BMP Info header
+		fwrite(&bitmapInfoHeader, 1, sizeof(BITMAPINFOHEADER), filePtr);
+
+		// Save Image Data
+		fwrite(imageData, 1, bitmapInfoHeader.biSizeImage, filePtr);
+
+		fclose(filePtr);
+
+		for (imageIdx = 0; imageIdx < bitmapInfoHeader.biSizeImage; imageIdx += 3)
+		{
+			tempRGB = imageData[imageIdx];
+			imageData[imageIdx] = imageData[imageIdx + 2];
+			imageData[imageIdx + 2] = tempRGB;
+		}
+
+		return 1;
+	}
+
+	void SaveScreenshot(int winWidth, int winHeight, unsigned char* _imagebuffer)
+	{
+		glReadPixels(0, 0, winWidth * 1, winHeight * 1, GL_RGB, GL_UNSIGNED_BYTE, _imagebuffer);
+
+		SaveBMP("ScreenShot.bmp", winWidth, winHeight, _imagebuffer);
 	}
 }
 
