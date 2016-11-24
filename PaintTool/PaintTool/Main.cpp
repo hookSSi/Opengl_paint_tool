@@ -52,17 +52,17 @@ LRESULT CALLBACK WndProc(
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크기를 조정한다.
 {
-	glViewport(0.0, 0.0, width, height); // 고정 시켜 주세요
+	glViewport(0.0, 0.0, ww, wh); // 고정 시켜 주세요
 
-	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
-	glLoadIdentity(); // 투영행렬을 리셋한다
+	//glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
+	//glLoadIdentity(); // 투영행렬을 리셋한다
 	glOrtho(0, width, 0, height, 1.0, 1.0);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	//glMatrixMode(GL_MODELVIEW);
+	//glLoadIdentity();
 
-	ww = width;
-	wh = height;
+	//ww = width;
+	//wh = height;
 }
 
 int InitGL(GLvoid)
@@ -95,7 +95,9 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 
 	rectangle.color = Color(1, 1,1, 1);
 	rectangle.Draw();*/
-	Debug::Circle();
+	Drawing::Circle circle(1);
+	circle.color = Color(1, 0, 0, 1);
+	circle.Draw();
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glRasterPos2i(100, 100);
 	glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, bitmapData);
@@ -103,9 +105,16 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	return TRUE; // 무사히 마침
 }
 
-void MouseInput()
+void MouseInput(int winWidth, int winHeight)
 {
+	int mouse_X;
+	int mouse_Y;
+	POINT pointCursorPos;
 
+	GetCursorPos(&pointCursorPos);
+	mouse_X += (pointCursorPos.x - winWidth / 2);
+	mouse_Y += (pointCursorPos.y - winHeight / 2);
+	//SetCursorPos(winWidth / 2, winHeight / 2);
 }
 
 void KeyboardInput()

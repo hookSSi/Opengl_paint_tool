@@ -1,5 +1,17 @@
 #include "Drawing.h"
 
+const float PI = 3.1415926535897932384626433832795;
+
+const float RadToDeg(const float radian)
+{
+	return radian * 180 / PI;
+}
+
+const float  DegToRad(const float degree)
+{
+	return degree * PI / 180;
+}
+
 //// 직교좌표계 방법
 //void RectangularCoordinate(const float radius,const float e)
 //{
@@ -49,11 +61,11 @@
 //	glEnd();
 //}
 
-void Drawing::Rectangle::Draw()
+void Drawing::Rectangle::Draw(Vector2 endPoint)
 {
 	Object::Draw();
 
-	glBegin(GL_POLYGON);
+	glBegin(GL_LINE_LOOP);
 	{
 		glVertex2f(transform.position.x, transform.position.y);
 		glVertex2f(endPoint.x, transform.position.y);
@@ -71,15 +83,16 @@ void Drawing::Circle::PolarCoordinate(const float _radius)
 	GLfloat curX = 0, curY = 0;
 	int count = 0;
 
-	for (angle = 0; angle <= 360; angle += 1)
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i <= 360; i += 1)
 	{
+		angle = DegToRad(i);
 		curX = cos(angle) * radius;
 		curY = sin(angle) * radius;
-
-		glBegin(GL_POINTS);
+		
 		glVertex2f(curX, curY);
-		glEnd();
 	}
+	glEnd();
 	glFlush();
 }
 

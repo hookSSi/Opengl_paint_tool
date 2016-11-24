@@ -36,15 +36,13 @@ namespace Drawing
 	class Rectangle : public Object
 	{
 	public:
-		Vector2 endPoint;
-
 		Rectangle() :Object() { Rectangle::Rectangle(Vector2(0, 0)); }
 		Rectangle(Vector2 _startPoint) { this->transform.position = (Vector3)_startPoint; }
 		Rectangle(Vector3 _startPoint) { this->transform.position = _startPoint; }
 
 		virtual ~Rectangle() {}
 
-		virtual void Draw();	
+		virtual void Draw(Vector2 endPoint);	
 	};
 
 	class Circle : public Object
