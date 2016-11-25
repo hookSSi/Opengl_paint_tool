@@ -12,6 +12,7 @@
 
 namespace BMP
 {
+
 	const int BITMAP_ID = 0x4D42;
 
 	unsigned char* LoadBMP(char* filename, BITMAPINFOHEADER *bitmapInfoHeader);

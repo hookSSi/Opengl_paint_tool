@@ -61,6 +61,22 @@ const float  DegToRad(const float degree)
 //	glEnd();
 //}
 
+/* Point Class */
+void Drawing::Point::Draw(Vector2 _pos)
+{
+	Object::Draw();
+
+	glBegin(GL_POLYGON);
+	glVertex2f(_pos.x + 1, _pos.y + 1);
+	glVertex2f(_pos.x - 1, _pos.y + 1);
+	glVertex2f(_pos.x - 1, _pos.y - 1);
+	glVertex2f(_pos.x + 1, _pos.y - 1);
+	glEnd();
+}
+
+
+/* Rectangle Class */
+
 void Drawing::Rectangle::Draw(Vector2 endPoint)
 {
 	Object::Draw();
@@ -75,6 +91,7 @@ void Drawing::Rectangle::Draw(Vector2 endPoint)
 	glEnd();
 }
 
+/* Circle Class */
 
 // ±ØÁÂÇ¥°è ¹æ¹ý
 void Drawing::Circle::PolarCoordinate(const float _radius)

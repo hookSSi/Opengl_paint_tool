@@ -18,7 +18,7 @@ namespace Drawing
 	class Point : public Object
 	{
 	public:
-		virtual void Draw();
+		virtual void Draw(Vector2 _pos);
 	};
 
 	class Line : public Object
