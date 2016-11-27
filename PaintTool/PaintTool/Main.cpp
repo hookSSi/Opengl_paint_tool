@@ -44,19 +44,30 @@ static wchar_t lpstrFile1[MAX_PATH_LENGTH]; // 파일 경로 문자열 버퍼
 static wchar_t lpstrFile2[MAX_PATH_LENGTH];
 
 unsigned char* imagebuffer; // 이미지 읽고 쓰기 버퍼
+bool isOpen = false;
 unsigned char* imageData; // 이미지 파일
 
-static int pixelWidth = 640; // 이미지 너비
-static int pixelHeight = 480; // 이미지 높이
-
+static int pixelWidth = 640;
+static int pixelHeight = 460;
 static int windowWidth = 640; // 윈도우 너비
 static int windowHeight = 480; // 윈도우 높이
 
 
 /* 마우스 입력 관려 변수*/
-static int mouse_X = 320;
-static int mouse_Y = 240;
-static bool buttonDown = false;
+
+static Vector2 tempPos(320, 240);
+static Vector2 mouseStartPos(320,240);
+static Vector2 mouseLastPos(320,240);
+static const Vector2 CENTER(320, 240);
+
+static bool mouseButtonDown_L = false; // 왼쪽 버튼 UP
+static bool mouseButtonDown_R = false; // 오른쪽 버튼 UP
+static bool mouseButtonUp_L = true; // 왼쪽 버튼 DOWN
+static bool mouseButtonUp_R = true; // 오른쪽 버튼 DOWN
+static bool draging_R = false; // 드래그중?
+static bool draging_L = false;
+static bool preview = true; // 미리보기 활성화?
+static bool change = true; // 이미지 변화?
 
 
 OPENFILENAME OFN; // 열기
@@ -69,62 +80,97 @@ LRESULT CALLBACK WndProc(
 	LPARAM lParam // 추가 메시지 정보
 	);
 
+int DrawGLScene(GLvoid); // 출력 함수
+
 void ReadImageDatas(); // 이미지 파일 읽기
 void WriteImageDatas(); // 이미지 파일 쓰기
+void ObjectManager(Object &object, Color color, float size); // 오브젝트 설정 함수
+void DrawingManager(); // 그리기 함수
+void PreviewManager(); // 미리보기 함수
+
+const int MODE_POINT = 0; // 점
+const int MODE_LINE = 1; // 선
+const int MODE_CIRCLE = 2; // 원
+const int MODE_RECT = 3; // 사각형
+const int MODE_TRIANGLE = 4; // 삼각형
+const int MODE_ERASER = 5; // 지우개
+
+static int mode = 0;
+static bool fill = false;
+static float objectSize = 5;
+
+static Drawing::Point point;
+static Drawing::Line line;
+
+/* 색관련 변수 */
+CHOOSECOLOR colorChooser;
+static COLORREF arrayCustomColor[16];
+static DWORD rgbCurrent;
+
+const static Color WHITE = Color(1, 1, 1);
+const static Color BLACK = Color(0, 0, 0);
+
+static Color colorMode[2] = { BLACK,WHITE };
 
 
 void ReadImageDatas()
 {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glRasterPos2i(-1, -1);
-	glDrawPixels(pixelWidth * 1, pixelHeight * 1, GL_RGB, GL_UNSIGNED_BYTE, imageData);
+	if (imageData != nullptr)
+	{
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		glRasterPos2i(0, 0);
+
+		glDrawPixels(pixelWidth, pixelHeight, GL_RGB, GL_UNSIGNED_BYTE, imageData);
+		glFlush();
+		glPopAttrib();
+	}
 }
 
 void WriteImageDatas()
 {
-	glColor3f(1, 1, 1);
-	glBegin(GL_POLYGON);
+	if (imageData == nullptr)
 	{
-		glVertex2f(0 + pixelWidth, 0 + pixelHeight);
-		glVertex2f(0 - pixelWidth, 0 + pixelHeight);
-		glVertex2f(0 - pixelWidth, 0 - pixelHeight);
-		glVertex2f(0 + pixelWidth, 0 - pixelHeight);
+		imageData = (unsigned char*)malloc(pixelWidth * pixelHeight * 3);
+		memset(imageData, 1, pixelWidth * pixelHeight * 3);
 	}
-	glEnd();
-
-	free(imageData);
-	imageData = (unsigned char*)malloc(pixelHeight * pixelWidth * 3);
-	memset(imageData, 0, pixelHeight * pixelWidth * 3);
-
-	glReadPixels(0, 0, pixelWidth * 1, pixelHeight * 1, GL_RGB, GL_UNSIGNED_BYTE, imageData);
+	else
+	{
+		realloc(imageData, sizeof(unsigned char) * (pixelWidth * pixelHeight * 3));
+		memset(imageData, 1, pixelWidth * pixelHeight * 3);
+	}
+	
+	glReadPixels(0,0, pixelWidth * 1, pixelHeight * 1, GL_RGB, GL_UNSIGNED_BYTE, imageData);
 }
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크기를 조정한다.
 {
-	glViewport(0.0, 0.0, width, height); // 고정 시켜 주세요
-
-	glMatrixMode(GL_PROJECTION); // 투영 행렬을 선택
-	glLoadIdentity(); // 투영행렬을 리셋한다
-	glOrtho(0, width, 0, height, 0, 5);
-
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, (GLdouble)width, 0.0, (GLdouble)height, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	/* adjust viewport and  clear */	
+
+	glViewport(0, 0, width, height);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // 배경색 설정
+	glClear(GL_COLOR_BUFFER_BIT);
+	ReadImageDatas();
+	DrawGLScene();
+	glFlush();
+
+	/* set global size for use by drawing routine */
+
 	windowWidth = width;
 	windowHeight = height;
+	change = true;
 }
 
 int InitGL(GLvoid)
 {
-	ReSizeGLScene(640, 480);
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // 배경색 설정
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glFlush();
-
-
-
-	WriteImageDatas();
+	ReSizeGLScene(windowWidth, windowHeight);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // 배경색 설정
 
 	return TRUE; // 초기화가 무사히 끝났음
 }
@@ -134,46 +180,182 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
-	ReadImageDatas();
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	if (isOpen)
+	{
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		glRasterPos2i(0, 0);
 
-	//gluLookAt(0.0, 0.0, 1.0,
-	//	0.0, 0.0, -1.0,
-	//	0.0, 1.0, 0.0);
+		glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, imagebuffer);
+		isOpen = FALSE;
+		change = TRUE;
+	}
 
-	/*
-	여기에 드로잉 코드를 넣는 걸로...
-	*/
+	glFlush();
+	glPopAttrib();
 
-	/*Drawing::Rectangle rectangle(Vector2(-3,-1));
+	DrawingManager();
 
-	rectangle.endPoint = Vector2(5, 10);
+	if (change)
+	{
+		WriteImageDatas();
+		change = false;
+	}
+	else if (preview)
+	{
+		PreviewManager();
+	}
 
-	rectangle.color = Color(1, 1,1, 1);
-	rectangle.Draw();*/
-
-	//Drawing::Circle circle(1);
-	//circle.color = Color(1, 0, 0, 1);
-	//circle.Draw();
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glRasterPos2i(-1, -1);
-
-	glDrawPixels(bitmapInfoHeader.biWidth, bitmapInfoHeader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, imagebuffer);
-
-	WriteImageDatas();
+	SwapBuffers(hDC);
 
 	return TRUE; // 무사히 마침
 }
 
-void KeyboardInput()
+void ObjectManager(Object &object, Color color, float size) // 그릴려는 오브젝트 설정
 {
+	object.color = color;
+	object.transform.scale = Vector3(size,size,0);
+}
 
+void PreviewManager()
+{
+	glClear(GL_COLOR_BUFFER_BIT); // 미리보기 지우기
+	ReadImageDatas(); // 이미지 불러오기
+
+	switch (mode)
+	{
+		case MODE_POINT:
+		{
+			ObjectManager(point, colorMode[0], objectSize);
+
+			point.transform.position = (Vector3)mouseLastPos;
+			tempPos = mouseLastPos;
+			point.Draw();
+		}
+		break;
+		case MODE_LINE:
+		{
+			ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
+
+			if (mouseButtonDown_L)
+			{
+				ObjectManager(line, colorMode[0], objectSize); // 오브젝트 설정
+
+				line.transform.position = (Vector3)mouseStartPos;
+				tempPos = mouseLastPos;
+				line.Draw(mouseLastPos.x, mouseLastPos.y);
+			}
+			else if (mouseButtonDown_R)
+			{
+				ObjectManager(line, colorMode[1], objectSize); // 오브젝트 설정
+
+				line.transform.position = (Vector3)mouseStartPos;
+				tempPos = mouseLastPos;
+				line.Draw(mouseLastPos.x, mouseLastPos.y);
+			}
+			else
+			{
+				point.transform.position = (Vector3)mouseLastPos;
+				point.Draw();
+			}
+		}
+		break;
+		case MODE_ERASER:
+		{
+			ObjectManager(point, WHITE, objectSize);
+			point.transform.position = (Vector3)mouseLastPos;
+			tempPos = mouseLastPos;
+			point.Draw();
+		}
+		break;		
+	}
+	
+}
+
+
+void DrawingManager()
+{
+	switch (mode)
+	{
+		/* 점 */
+	case MODE_POINT:
+	{
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(point, colorMode[0], objectSize);
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(point, colorMode[1], objectSize);
+		}			
+		
+		if (tempPos != mouseLastPos)
+		{
+			point.transform.position = (Vector3)tempPos;
+			point.Draw();
+		}
+
+		if (draging_L || draging_R)
+		{
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+	}
+	break;
+	/* 선 */
+	case MODE_LINE:
+	{
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(line, colorMode[0], objectSize);
+			line.transform.position = (Vector3)mouseStartPos;
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(line, colorMode[1], objectSize);
+			line.transform.position = (Vector3)mouseStartPos;
+		}
+
+		if (!preview)
+		{
+			line.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+	}
+	break;
+	/* 원 */
+	case MODE_CIRCLE:
+	{
+
+	}
+	break;
+	/* 지우개 */
+	case MODE_ERASER:
+	{
+		ObjectManager(point, WHITE, objectSize);
+
+		if (tempPos != mouseLastPos)
+		{
+			point.transform.position = (Vector3)tempPos;
+			point.Draw();
+		}
+
+		if (draging_L || draging_R)
+		{
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+	}
+	break;
+	}
 }
 
 void MenuManager(WPARAM &wParam, LPARAM &lParam)
 {
 	switch (LOWORD(wParam))
 	{
+		/* 파일 */
+	case MENU1_NEWFILE:
+		return;
 	case MENU1_OPEN:
 		memset(&OFN, 0, sizeof(OPENFILENAME));
 		OFN.lStructSize = sizeof(OPENFILENAME);
@@ -185,9 +367,11 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		if (GetOpenFileName(&OFN) != 0)
 		{
 			imagebuffer = BMP::LoadBMP(Util::ConvertWCtoC(OFN.lpstrFile), &bitmapInfoHeader); // 읽어서 ImageBuffer에 저장
+			isOpen = true;
 		}
 		return;
 	case MENU1_SAVE:
+		WriteImageDatas();
 		BMP::SaveScreenshot(pixelWidth, pixelHeight, imageData);
 		return;
 	case MENU1_SAVE_ANOTHER_NAME:
@@ -207,81 +391,60 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 			{
 				fileName.append(".bmp");
 			}
-
+			WriteImageDatas();
 			BMP::SaveBMP(fileName.data(), pixelWidth, pixelHeight, imageData); // 이미지 파일 저장
 		}
 		return;
 	case MENU1_EXIT:
 		PostQuitMessage(0); // 종료 메시지를 보냄
 		return;
+		/* 점 */
+	case ID_POINT:
+		mode = MODE_POINT;
+		break;
+		/* 선 */
+	case ID_LINE:
+		mode = MODE_LINE;
+		break;
+		/* 도형 */
+	case ID_CIRCLE_COORD:
+		mode = MODE_CIRCLE;
+		break;
+		/* 지우개 */
+	case ID_ERASER:
+		mode = MODE_ERASER;
+		break;
+		/* 색 */
+	case ID_COLOR_BOX:
+	{
+		ZeroMemory(&colorChooser, sizeof(colorChooser));
+		colorChooser.lStructSize = sizeof(colorChooser);
+		colorChooser.hwndOwner = hWnd;
+		colorChooser.lpCustColors = (LPDWORD)arrayCustomColor;
+		colorChooser.rgbResult = rgbCurrent;
+		colorChooser.Flags = CC_FULLOPEN | CC_RGBINIT;
+
+		if (ChooseColor(&colorChooser) == TRUE)
+		{
+			if(MessageBox(NULL, TEXT("컬러를 적용시킬 브러쉬를 선택하세요. \n 예 - 왼쪽 아니요 - 오른쪽") , TEXT("브러쉬 선택"), MB_YESNO | MB_ICONQUESTION) == IDYES)
+			{
+				colorMode[0] = Color(colorChooser.rgbResult);
+			}
+			else
+			{
+				colorMode[1] = Color(colorChooser.rgbResult);
+			}
+		}
 	}
-}
-
-void CreateToolBoxMenu()
-{
-	INITCOMMONCONTROLSEX initCtrlEx;
-
-	initCtrlEx.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	initCtrlEx.dwICC = ICC_BAR_CLASSES;
-	InitCommonControlsEx(&initCtrlEx);
-
-	TBBUTTON tbrButtons[6];
-
-
-	tbrButtons[0].iBitmap = 0;
-	tbrButtons[0].idCommand = ID_PANCIL;
-	tbrButtons[0].fsState = TBSTATE_ENABLED;
-	tbrButtons[0].fsStyle = TBSTYLE_BUTTON;
-	tbrButtons[0].dwData = 0L;
-	tbrButtons[0].iBitmap = 0;
-	tbrButtons[0].iString = 0;
-
-	tbrButtons[1].iBitmap = 0;
-	tbrButtons[1].idCommand = 0;
-	tbrButtons[1].fsState = TBSTATE_ENABLED;
-	tbrButtons[1].fsStyle = TBSTYLE_SEP;
-	tbrButtons[1].dwData = 0L;
-	tbrButtons[1].iString = 0;
-
-	tbrButtons[2].iBitmap = 1;
-	tbrButtons[2].idCommand = ID_CIRCLE;
-	tbrButtons[2].fsState = TBSTATE_ENABLED;
-	tbrButtons[2].fsStyle = TBSTYLE_BUTTON;
-	tbrButtons[2].dwData = 0L;
-	tbrButtons[2].iString = 0;
-
-	tbrButtons[3].iBitmap = 2;
-	tbrButtons[3].idCommand = ID_RECTANGLE;
-	tbrButtons[3].fsState = TBSTATE_ENABLED;
-	tbrButtons[3].fsStyle = TBSTYLE_BUTTON;
-	tbrButtons[3].dwData = 0L;
-	tbrButtons[3].iString = 0;
-
-	tbrButtons[4].iBitmap = 3;
-	tbrButtons[4].idCommand = ID_TRIANGLE;
-	tbrButtons[4].fsState = TBSTATE_ENABLED;
-	tbrButtons[4].fsStyle = TBSTYLE_BUTTON;
-	tbrButtons[4].dwData = 0L;
-	tbrButtons[4].iString = 0;
-
-	tbrButtons[5].iBitmap = 4;
-	tbrButtons[5].idCommand = ID_CHAR;
-	tbrButtons[5].fsState = TBSTATE_ENABLED;
-	tbrButtons[5].fsStyle = TBSTYLE_BUTTON;
-	tbrButtons[5].dwData = 0L;
-	tbrButtons[5].iString = 0;
-
-	HWND hWndToolbar;
-	hWndToolbar = CreateToolbarEx(hWnd,
-		WS_VISIBLE | WS_CHILD | WS_BORDER,
-		IDR_TOOLBAR1,
-		6,
-		hInstance,
-		IDR_TOOLBAR1,
-		tbrButtons,
-		6,
-		16, 16, 16, 16,
-		sizeof(TBBUTTON));
+	break;
+	/* 전체 지우기 */
+	case ID_ALL_CLEAR:
+	{
+		glClear(GL_COLOR_BUFFER_BIT);
+		WriteImageDatas();
+	}
+		break;
+	}
 }
 
 GLvoid KillGLWindow(GLvoid) // 프로그램이 종료되기 바로 직전 실행됨
@@ -415,15 +578,12 @@ BOOL CreateGLWindow(LPCWSTR title, int width, int height, int bits, bool fullScr
 	}
 
 
-	CreateToolBoxMenu();
-
-
 	static PIXELFORMATDESCRIPTOR pfd = {
 		sizeof(PIXELFORMATDESCRIPTOR), // 구조체의 크기
 		1, // 버전 -> 항상 1로 고정됨
 		PFD_DRAW_TO_WINDOW | // 창 모드 지원
 		PFD_SUPPORT_OPENGL | // OpenGL 지원
-		PFD_DOUBLEBUFFER | // 더블 버퍼링 지원
+		PFD_DOUBLEBUFFER |
 		PFD_TYPE_RGBA, // RGBA 색상 모드
 		32, // 32비트 색상 모드
 		0, 0, 0, 0, 0, 0, // 색상 비트들은 무시
@@ -534,6 +694,7 @@ LRESULT CALLBACK WndProc(
 		case WM_KEYDOWN: // 키가 눌리고 있는 경우
 		{
 			keys[wParam] = TRUE;
+
 			return 0;
 		}
 		case WM_COMMAND:
@@ -551,32 +712,113 @@ LRESULT CALLBACK WndProc(
 			ReSizeGLScene(LOWORD(lParam), HIWORD(lParam)); // LoWord = 너비, HiWord = 높이
 			return 0;
 		}
-		case WM_LBUTTONUP:
+		case WM_LBUTTONDOWN: // 마우스 왼쪽 버튼 누름
 		{
-			buttonDown = FALSE;
+			mouseStartPos.x = LOWORD(lParam);
+			mouseStartPos.y = windowHeight - HIWORD(lParam);
+			
+			mouseButtonDown_L = TRUE;
 			return 0;
 		}
-		case WM_LBUTTONDOWN:
+		case WM_RBUTTONDOWN: // 마우스 오른쪽 버튼 누름
 		{
-			mouse_X = LOWORD(lParam);
-			mouse_Y = HIWORD(lParam);
-			buttonDown = TRUE;
+			mouseStartPos.x = LOWORD(lParam);
+			mouseStartPos.y = windowHeight - HIWORD(lParam);
 
+			mouseButtonDown_R = TRUE;
 			return 0;
 		}
-		case WM_MOUSEMOVE:
+		case WM_MOUSEMOVE: // 마우스 움직임
 		{
-			if (buttonDown)
+			mouseLastPos.x = LOWORD(lParam);
+			mouseLastPos.y = windowHeight - HIWORD(lParam);
+
+			if (mode == MODE_POINT)
 			{
-				mouse_X = LOWORD(lParam);
-				mouse_Y = HIWORD(lParam);
-				Drawing::Point point;
-				point.color = Color(1, 0, 0, 1);
-				point.Draw(Vector2(mouse_X, mouse_Y));
+				if (mouseButtonDown_L) // 마우스 버튼 누름
+				{
+					preview = false;
+					draging_L = TRUE;
+				}
+				else if (mouseButtonDown_R)
+				{
+					preview = false;
+					draging_R = TRUE;
+				}
+				else
+				{
+					preview = true;
+				}
 			}
+			else if (mode == MODE_LINE)
+			{
+				preview = true;
+			}
+			
+
 			return 0;
 		}
+		case WM_LBUTTONUP: // 마우스 왼쪽 버튼 뗌
+		{
+			mouseLastPos.x = LOWORD(lParam);
+			mouseLastPos.y = windowHeight - HIWORD(lParam);
 
+			mouseStartPos.x = LOWORD(lParam);
+			mouseStartPos.y = windowHeight - HIWORD(lParam);
+
+			mouseButtonDown_L = FALSE;
+			draging_L = FALSE;
+
+			if (mode == MODE_POINT)
+			{
+				preview = false;
+			}
+			else if (mode == MODE_LINE)
+			{
+				preview = false;
+			}
+
+			if (!preview)
+				change = TRUE;
+
+			return 0;
+		}
+		case WM_RBUTTONUP: // 마우스 오른쪽 버튼 뗌
+		{
+			mouseLastPos.x = LOWORD(lParam);
+			mouseLastPos.y = windowHeight - HIWORD(lParam);
+
+			mouseStartPos.x = LOWORD(lParam);
+			mouseStartPos.y = windowHeight - HIWORD(lParam);
+
+			mouseButtonDown_R = FALSE;
+			draging_R = FALSE;
+
+
+			if (mode == MODE_POINT)
+			{
+				preview = false;
+			}
+			else if (mode == MODE_LINE)
+			{
+				preview = false;
+			}
+
+			if (!preview)
+				change = TRUE;
+			return 0;
+		}
+		case WM_MOUSEWHEEL:
+		{
+			((short)HIWORD(wParam)<0) ? objectSize-= 0.3f : objectSize+= 0.3f;
+
+			if (objectSize > 10)
+				objectSize = 10;
+			if (objectSize < 1)
+				objectSize = 1;
+
+			return 0;
+		}
 		return DefWindowProc(hWnd, message, wParam, lParam); // 처리되지 않은 메시지는 DefWindowProc로 전달한다.
 	}
 
@@ -630,7 +872,6 @@ int WINAPI WinMain(
 				else
 				{
 					DrawGLScene();
-					SwapBuffers(hDC);
 				}
 
 				if (keys[VK_F1])                    // F1이 눌렸는지 검사
@@ -652,7 +893,7 @@ int WINAPI WinMain(
 			}
 		}
 	}
-
+	free(imageData);
 	KillGLWindow(); // 윈도우를 죽임
 	return msg.wParam; // 프로그램 종료
 }

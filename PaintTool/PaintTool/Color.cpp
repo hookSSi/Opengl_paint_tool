@@ -25,6 +25,20 @@ void Color::ResizeValue(Color& const _color) const
 }
 
 // public
+Color::Color(const COLORREF& _color)
+{
+	this->r = ((BYTE)(_color));
+	this->g = ((BYTE)(((WORD)(_color)) >> 8));
+	this->b = ((BYTE)((_color) >> 16));
+
+	this->r /= 256;
+	this->g /= 256;
+	this->b /= 256;
+	this->a = 1;
+
+	ResizeValue(*this);
+}
+
 Color& Color::operator=(const Color& _color)
 {
 	if (this != &_color)

@@ -1,6 +1,8 @@
 #ifndef  __COLOR_H_
 #define __COLOR_H_
 
+#include<Windows.h>
+
 class Color
 {
 private:
@@ -13,6 +15,7 @@ public:
 	Color(float _r, float _g, float _b) : r(_r), g(_g), b(_b), a(1) { ResizeValue(*this); }
 	Color(float _r, float _g, float _b, float _a) :r(_r), g(_g), b(_b), a(1) { ResizeValue(*this);}
 	Color(const Color& _color) { r = _color.r; g = _color.g; b = _color.b; a = _color.a; };
+	Color(const COLORREF& _color);
 
 	~Color() {};
 

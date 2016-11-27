@@ -58,13 +58,6 @@ Object& Object::operator=(const Object& other)
 
 void Object::Draw()
 {
-	glTranslatef(transform.position.x, transform.position.y, transform.position.z); // 이동 변환
-
-	glScalef(transform.scale.x, transform.scale.y, transform.scale.z); // 스케일 변환
-
-	glRotatef(transform.rotation.x, 1.0f, 0.0f, 0.0f); // x축 회전
-	glRotatef(transform.rotation.y, 0.0f, 1.0f, 0.0f); // y축 회전
-	glRotatef(transform.rotation.z, 0.0f, 0.0f, 1.0f); // z축 회전
-
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glColor4f(color.r, color.g, color.b, color.a);
 }

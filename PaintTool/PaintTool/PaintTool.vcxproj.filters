@@ -95,9 +95,4 @@
       <Filter>Source Files\Drawing</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="toolbar1.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
 </Project>

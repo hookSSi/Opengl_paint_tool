@@ -18,13 +18,13 @@ namespace Drawing
 	class Point : public Object
 	{
 	public:
-		virtual void Draw(Vector2 _pos);
+		virtual void Draw();
 	};
 
 	class Line : public Object
 	{
 	public:
-		virtual void Draw();
+		virtual void Draw(float _lastX, float _lastY);
 	};
 
 	class TRIANGLE : public Object
@@ -51,9 +51,10 @@ namespace Drawing
 		void PolarCoordinate(const float _radius);
 	public:
 		float radius;
+		int mode;
 
 		Circle() :Object() { Circle::Circle(1); }
-		Circle(float _radius) :radius(_radius) {}
+		Circle(float _radius) :radius(_radius), mode(0) { }
 
 		virtual ~Circle() {}
 

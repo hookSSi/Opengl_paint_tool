@@ -175,9 +175,6 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="toolbar1.bmp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
