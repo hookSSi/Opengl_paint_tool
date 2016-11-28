@@ -12,26 +12,6 @@ const float  DegToRad(const float degree)
 	return degree * PI / 180;
 }
 
-/* Line Class */
-void Drawing::Line::Draw(float _lastX, float _lastY)
-{
-	Object::Draw();
-
-	glScalef(1, 1, 1);
-	glLineWidth(transform.scale.x * 2);
-
-	glBegin(GL_LINES);
-	{
-		glVertex2f(transform.position.x, transform.position.y);
-		glVertex2f(_lastX, _lastY);
-	}
-	glEnd();
-
-
-	glFlush();
-	glFinish();
-	glPopAttrib();
-}
 
 /* Point Class */
 void Drawing::Point::Draw()
@@ -51,10 +31,28 @@ void Drawing::Point::Draw()
 	glEnd();
 
 	glFlush();
-	glFinish();
 	glPopAttrib();
 }
 
+/* Line Class */
+void Drawing::Line::Draw(float _lastX, float _lastY)
+{
+	Object::Draw();
+
+	glScalef(1, 1, 1);
+	glLineWidth(transform.scale.x * 2);
+
+	glBegin(GL_LINES);
+	{
+		glVertex2f(transform.position.x, transform.position.y);
+		glVertex2f(_lastX, _lastY);
+	}
+	glEnd();
+
+
+	glFlush();
+	glPopAttrib();
+}
 
 /* Rectangle Class */
 
@@ -75,20 +73,26 @@ void Drawing::Rectangle::Draw(Vector2 endPoint)
 /* Circle Class */
 
 // Á÷±³ÁÂÇ¥°è ¹æ¹ý
-void RectangularCoordinate(const float radius, const float e)
+void RectangularCoordinate(Vector2 _pos, const float radius, bool _fill ,const float e)
 {
 	glColor3f(1.0f, 0.0, 0.0f); // »¡°£»ö
 
-	for (GLfloat x = -radius; x <= radius; x += 0.01)
+	glBegin(GL_LINE_LOOP);
 	{
-		for (GLfloat y = -radius; y <= radius; y += 0.01)
+		for (GLfloat x = _pos.x - radius; x <= _pos.x + radius ; x += 0.1)
 		{
-			if (((pow(radius - e, 2)) <= (pow(x, 2) + pow(y, 2))) && ((pow(x, 2) + pow(y, 2)) <= (pow(radius + e, 2))))
+			for (GLfloat y = (_pos.y - radius /2 ); y <= _pos.y + radius / 2; y += 0.1)
 			{
-				//DrawPoint(x, y);
+				if (((pow(radius - e, 2)) <= (pow(x - _pos.x, 2) + pow(y -_pos.y, 2))) && ((pow(x - _pos.x, 2) + pow(y - _pos.y, 2)) <= (pow(radius + e, 2))))
+				{
+
+					glVertex2f(x, y);
+				}
 			}
 		}
 	}
+	glEnd();
+
 }
 
 
@@ -143,14 +147,22 @@ void Drawing::Circle::PolarCoordinate(const float _radius)
 }
 
 
-void Drawing::Circle::Draw()
+void Drawing::Circle::Draw(float _lastX, float _lastY, bool _fill)
 {
 	Object::Draw();
+
+	this->radius = abs((long)(transform.position.x - _lastX));
+
+	if (_fill)
+	{
+		glScalef(1, 1, 1);
+		glLineWidth(transform.scale.x * 2);
+	}
 
 	switch (this->mode)
 	{
 	case 0:
-		RectangularCoordinate(this->radius, 0.001f);
+		RectangularCoordinate((Vector2)transform.position,this->radius,_fill, 0.001f);
 		break;
 	case 1:
 		PolarCoordinate(this->radius);
@@ -161,6 +173,5 @@ void Drawing::Circle::Draw()
 	}
 
 	glFlush();
-	glFinish();
 	glPopAttrib();
 }

@@ -101,6 +101,7 @@ static float objectSize = 5;
 
 static Drawing::Point point;
 static Drawing::Line line;
+static Drawing::Circle circle;
 
 /* 색관련 변수 */
 CHOOSECOLOR colorChooser;
@@ -110,7 +111,7 @@ static DWORD rgbCurrent;
 const static Color WHITE = Color(1, 1, 1);
 const static Color BLACK = Color(0, 0, 0);
 
-static Color colorMode[2] = { BLACK,WHITE };
+static Color colorMode[2] = { BLACK,WHITE }; // 왼쪽, 오른쪽
 
 
 void ReadImageDatas()
@@ -222,14 +223,14 @@ void ObjectManager(Object &object, Color color, float size) // 그릴려는 오브젝트
 	object.transform.scale = Vector3(size,size,0);
 }
 
-void PreviewManager()
+void PreviewManager() // 미리보기 출력 함수
 {
 	glClear(GL_COLOR_BUFFER_BIT); // 미리보기 지우기
 	ReadImageDatas(); // 이미지 불러오기
 
 	switch (mode)
 	{
-		case MODE_POINT:
+		case MODE_POINT: // 점
 		{
 			ObjectManager(point, colorMode[0], objectSize);
 
@@ -238,7 +239,7 @@ void PreviewManager()
 			point.Draw();
 		}
 		break;
-		case MODE_LINE:
+		case MODE_LINE: // 선
 		{
 			ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
 
@@ -265,7 +266,35 @@ void PreviewManager()
 			}
 		}
 		break;
-		case MODE_ERASER:
+		case MODE_CIRCLE: // 원
+		{
+			ObjectManager(point, colorMode[0], 1);
+
+
+			if (mouseButtonDown_L)
+			{
+				ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
+
+				circle.transform.position = (Vector3)mouseStartPos;
+				tempPos = mouseLastPos;
+				circle.Draw(mouseLastPos.x, mouseLastPos.y,true);
+			}
+			else if (mouseButtonDown_R)
+			{
+				ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
+
+				circle.transform.position = (Vector3)mouseStartPos;
+				tempPos = mouseLastPos;
+				circle.Draw(mouseLastPos.x, mouseLastPos.y,true);
+			}
+			else
+			{
+				point.transform.position = (Vector3)mouseLastPos;
+				point.Draw();
+			}
+		}
+		break;
+		case MODE_ERASER: // 지우개
 		{
 			ObjectManager(point, WHITE, objectSize);
 
@@ -401,6 +430,15 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		/* 도형 */
 	case ID_CIRCLE_COORD:
 		mode = MODE_CIRCLE;
+		circle.mode = 0;
+		break;
+	case ID_CIRCLE_POLAR:
+		mode = MODE_CIRCLE;
+		circle.mode = 1;
+		break;
+	case ID_CIRCLE_BRESENHAM:
+		mode = MODE_CIRCLE;
+		circle.mode = 2;
 		break;
 		/* 지우개 */
 	case ID_ERASER:
@@ -746,6 +784,10 @@ LRESULT CALLBACK WndProc(
 			{
 				preview = true;
 			}
+			else if (mode = MODE_CIRCLE)
+			{
+				preview = true;
+			}
 			else if (mode == MODE_ERASER)
 			{
 				if (mouseButtonDown_L) // 마우스 버튼 누름
@@ -785,6 +827,10 @@ LRESULT CALLBACK WndProc(
 			{
 				preview = false;
 			}
+			else if (mode == MODE_CIRCLE)
+			{
+				preview = false;
+			}
 			else if (mode == MODE_ERASER)
 			{
 				preview = false;
@@ -812,6 +858,10 @@ LRESULT CALLBACK WndProc(
 				preview = false;
 			}
 			else if (mode == MODE_LINE)
+			{
+				preview = false;
+			}
+			else if (mode == MODE_CIRCLE)
 			{
 				preview = false;
 			}

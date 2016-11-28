@@ -58,7 +58,7 @@ namespace Drawing
 
 		virtual ~Circle() {}
 
-		virtual void Draw();
+		virtual void Draw(float _lastX, float _lastY, bool _fill);
 	};
 
 	class TEXT : public Object
