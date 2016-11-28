@@ -204,7 +204,12 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	else if (preview)
 	{
 		PreviewManager();
+		SwapBuffers(hDC);
 	}
+
+	SwapBuffers(hDC);
+
+	DrawingManager();
 
 	SwapBuffers(hDC);
 
@@ -263,6 +268,7 @@ void PreviewManager()
 		case MODE_ERASER:
 		{
 			ObjectManager(point, WHITE, objectSize);
+
 			point.transform.position = (Vector3)mouseLastPos;
 			tempPos = mouseLastPos;
 			point.Draw();
@@ -283,23 +289,15 @@ void DrawingManager()
 		if (mouseButtonDown_L)
 		{
 			ObjectManager(point, colorMode[0], objectSize);
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
 		}
 		else if (mouseButtonDown_R)
 		{
 			ObjectManager(point, colorMode[1], objectSize);
-		}			
-		
-		if (tempPos != mouseLastPos)
-		{
-			point.transform.position = (Vector3)tempPos;
-			point.Draw();
-		}
-
-		if (draging_L || draging_R)
-		{
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
-		}
+		}			
 	}
 	break;
 	/* 선 */
@@ -333,13 +331,7 @@ void DrawingManager()
 	{
 		ObjectManager(point, WHITE, objectSize);
 
-		if (tempPos != mouseLastPos)
-		{
-			point.transform.position = (Vector3)tempPos;
-			point.Draw();
-		}
-
-		if (draging_L || draging_R)
+		if (mouseButtonDown_L || mouseButtonDown_R)
 		{
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
@@ -754,7 +746,23 @@ LRESULT CALLBACK WndProc(
 			{
 				preview = true;
 			}
-			
+			else if (mode == MODE_ERASER)
+			{
+				if (mouseButtonDown_L) // 마우스 버튼 누름
+				{
+					preview = false;
+					draging_L = TRUE;
+				}
+				else if (mouseButtonDown_R)
+				{
+					preview = false;
+					draging_R = TRUE;
+				}
+				else
+				{
+					preview = true;
+				}
+			}
 
 			return 0;
 		}
@@ -774,6 +782,10 @@ LRESULT CALLBACK WndProc(
 				preview = false;
 			}
 			else if (mode == MODE_LINE)
+			{
+				preview = false;
+			}
+			else if (mode == MODE_ERASER)
 			{
 				preview = false;
 			}
@@ -800,6 +812,10 @@ LRESULT CALLBACK WndProc(
 				preview = false;
 			}
 			else if (mode == MODE_LINE)
+			{
+				preview = false;
+			}
+			else if (mode == MODE_ERASER)
 			{
 				preview = false;
 			}

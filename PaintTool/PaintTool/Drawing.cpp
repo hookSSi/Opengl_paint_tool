@@ -29,6 +29,7 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 
 
 	glFlush();
+	glFinish();
 	glPopAttrib();
 }
 
@@ -50,6 +51,7 @@ void Drawing::Point::Draw()
 	glEnd();
 
 	glFlush();
+	glFinish();
 	glPopAttrib();
 }
 
@@ -138,7 +140,6 @@ void Drawing::Circle::PolarCoordinate(const float _radius)
 		glVertex2f(curX, curY);
 	}
 	glEnd();
-	glFlush();
 }
 
 
@@ -160,5 +161,6 @@ void Drawing::Circle::Draw()
 	}
 
 	glFlush();
+	glFinish();
 	glPopAttrib();
 }
