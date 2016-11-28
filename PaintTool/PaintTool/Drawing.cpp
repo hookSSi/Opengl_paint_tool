@@ -54,40 +54,47 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 	glPopAttrib();
 }
 
-/* Rectangle Class */
-
-void Drawing::Rectangle::Draw(Vector2 endPoint)
-{
-	Object::Draw();
-
-	glBegin(GL_LINE_LOOP);
-	{
-		glVertex2f(transform.position.x, transform.position.y);
-		glVertex2f(endPoint.x, transform.position.y);
-		glVertex2f(endPoint.x, endPoint.y);
-		glVertex2f(transform.position.x, endPoint.y);
-	}
-	glEnd();
-}
-
 /* Circle Class */
 
 // Á÷±³ÁÂÇ¥°è ¹æ¹ý
-void RectangularCoordinate(Vector2 _pos, const float radius, bool _fill ,const float e)
+void RectangularCoordinate(Vector2 _centerPos, const float radius, bool _fill ,const float e)
 {
-	glColor3f(1.0f, 0.0, 0.0f); // »¡°£»ö
+	if (_fill)
+		glBegin(GL_POLYGON);
+	else
+		glBegin(GL_LINE_LOOP);
 
-	glBegin(GL_LINE_LOOP);
+	for (GLfloat x = _centerPos.x - radius; x <= _centerPos.x + radius ; x += 0.1)
 	{
-		for (GLfloat x = _pos.x - radius; x <= _pos.x + radius ; x += 0.1)
+		for (GLfloat y = _centerPos.y; y < _centerPos.y + radius; y += 0.1)
 		{
-			for (GLfloat y = (_pos.y - radius /2 ); y <= _pos.y + radius / 2; y += 0.1)
+			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
 			{
-				if (((pow(radius - e, 2)) <= (pow(x - _pos.x, 2) + pow(y -_pos.y, 2))) && ((pow(x - _pos.x, 2) + pow(y - _pos.y, 2)) <= (pow(radius + e, 2))))
-				{
-
-					glVertex2f(x, y);
-				}
+				glVertex2f(x, y);
+			}
+		}
+		for (GLfloat y = _centerPos.y + radius; y >= _centerPos.y; y -= 0.1)
+		{
+			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			{
+				glVertex2f(x, y);
+			}
+		}
+	}
+	for (GLfloat x = _centerPos.x + radius; x >= _centerPos.x - radius; x -= 0.1)
+	{
+		for (GLfloat y = _centerPos.y; y > _centerPos.y - radius; y -= 0.1)
+		{
+			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			{
+				glVertex2f(x, y);
+			}
+		}
+		for (GLfloat y = _centerPos.y - radius; y <= _centerPos.y; y += 0.1)
+		{
+			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			{
+				glVertex2f(x, y);
 			}
 		}
 	}
@@ -159,10 +166,12 @@ void Drawing::Circle::Draw(float _lastX, float _lastY, bool _fill)
 		glLineWidth(transform.scale.x * 2);
 	}
 
+	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+
 	switch (this->mode)
 	{
 	case 0:
-		RectangularCoordinate((Vector2)transform.position,this->radius,_fill, 0.001f);
+		RectangularCoordinate(center, this->radius,_fill, 0.001f);
 		break;
 	case 1:
 		PolarCoordinate(this->radius);
@@ -174,4 +183,20 @@ void Drawing::Circle::Draw(float _lastX, float _lastY, bool _fill)
 
 	glFlush();
 	glPopAttrib();
+}
+
+/* Rectangle Class */
+
+void Drawing::Rectangle::Draw(Vector2 endPoint)
+{
+	Object::Draw();
+
+	glBegin(GL_LINE_LOOP);
+	{
+		glVertex2f(transform.position.x, transform.position.y);
+		glVertex2f(endPoint.x, transform.position.y);
+		glVertex2f(endPoint.x, endPoint.y);
+		glVertex2f(transform.position.x, endPoint.y);
+	}
+	glEnd();
 }

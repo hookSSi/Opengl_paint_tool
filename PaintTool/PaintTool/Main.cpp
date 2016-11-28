@@ -195,8 +195,6 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 	glFlush();
 	glPopAttrib();
 
-	DrawingManager();
-
 	if (change)
 	{
 		WriteImageDatas();
@@ -226,6 +224,7 @@ void ObjectManager(Object &object, Color color, float size) // 그릴려는 오브젝트
 void PreviewManager() // 미리보기 출력 함수
 {
 	glClear(GL_COLOR_BUFFER_BIT); // 미리보기 지우기
+
 	ReadImageDatas(); // 이미지 불러오기
 
 	switch (mode)
@@ -270,14 +269,13 @@ void PreviewManager() // 미리보기 출력 함수
 		{
 			ObjectManager(point, colorMode[0], 1);
 
-
 			if (mouseButtonDown_L)
 			{
 				ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
 
 				circle.transform.position = (Vector3)mouseStartPos;
 				tempPos = mouseLastPos;
-				circle.Draw(mouseLastPos.x, mouseLastPos.y,true);
+				circle.Draw(mouseLastPos.x, mouseLastPos.y,fill);
 			}
 			else if (mouseButtonDown_R)
 			{
@@ -285,7 +283,7 @@ void PreviewManager() // 미리보기 출력 함수
 
 				circle.transform.position = (Vector3)mouseStartPos;
 				tempPos = mouseLastPos;
-				circle.Draw(mouseLastPos.x, mouseLastPos.y,true);
+				circle.Draw(mouseLastPos.x, mouseLastPos.y,fill);
 			}
 			else
 			{
@@ -304,7 +302,6 @@ void PreviewManager() // 미리보기 출력 함수
 		}
 		break;		
 	}
-	
 }
 
 
@@ -352,7 +349,20 @@ void DrawingManager()
 	/* 원 */
 	case MODE_CIRCLE:
 	{
-
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
+			circle.transform.position = (Vector3)mouseStartPos;
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
+			circle.transform.position = (Vector3)mouseStartPos;
+		}
+		if (!preview)
+		{
+			circle.Draw(mouseLastPos.x, mouseLastPos.y, fill);
+		}
 	}
 	break;
 	/* 지우개 */
@@ -428,6 +438,15 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		mode = MODE_LINE;
 		break;
 		/* 도형 */
+	case ID_CIRCLE_FILL:
+		fill = !fill;
+		break;
+	case ID_RECT_FILL:
+		fill = !fill;
+		break;
+	case ID_TRI_FILL:
+		fill = !fill;
+		break;
 	case ID_CIRCLE_COORD:
 		mode = MODE_CIRCLE;
 		circle.mode = 0;
