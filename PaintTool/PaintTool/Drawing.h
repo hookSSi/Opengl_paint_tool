@@ -30,16 +30,18 @@ namespace Drawing
 	class Triangle : public Object
 	{
 	private:
-		void NormalTriangle(float _lastX, float _lastY);
-		void AngledTriangle(float _lastX, float _lastY);
+		void NormalTriangle(float _lastX, float _lastY, bool _fill);
+		void AngledTriangle(float _lastX, float _lastY, bool _fill);
 	public:
-		int mode;
+		int count;
+		Vector2 secondPos;
 
-		Triangle() :Object(), mode(0) {}
+		Triangle() :Object(), count(0) { secondPos = Vector2(0, 0); }
 
 		virtual ~Triangle() {}
 
 		virtual void Draw(float _lastX, float _lastY, bool _fill);
+		void PlusCount() { count = (count + 1) % 3; }
 	};
 
 	class Rectangle : public Object

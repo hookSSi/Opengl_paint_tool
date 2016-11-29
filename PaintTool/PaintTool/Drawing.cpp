@@ -40,7 +40,7 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 	Object::Draw();
 
 	glScalef(1, 1, 1);
-	glLineWidth(transform.scale.x * 2);
+	glLineWidth(transform.scale.x);
 
 	glBegin(GL_LINES);
 	{
@@ -48,7 +48,6 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 		glVertex2f(_lastX, _lastY);
 	}
 	glEnd();
-
 
 	glFlush();
 	glFinish();
@@ -66,7 +65,7 @@ void Drawing::Circle::RectangularCoordinate(Vector2 _centerPos, const float radi
 	{
 		glBegin(GL_LINE_LOOP);
 		glScalef(1, 1, 1);
-		glLineWidth(transform.scale.x * 2);
+		glLineWidth(transform.scale.x);
 	}
 
 	for (GLfloat x = _centerPos.x - radius; x <= _centerPos.x + radius ; x += 0.1)
@@ -120,7 +119,7 @@ void Drawing::Circle::PolarCoordinate(Vector2 _centerPos, const float _radius, b
 	{
 		glBegin(GL_LINE_LOOP);
 		glScalef(1, 1, 1);
-		glLineWidth(transform.scale.x * 2);
+		glLineWidth(transform.scale.x);
 	}
 	for (int i = 0; i <= 360; i += 1)
 	{
@@ -276,7 +275,7 @@ void Drawing::Rectangle::Draw(float _lastX, float _lastY, bool _fill)
 	else
 	{
 		glScalef(1, 1, 1);
-		glLineWidth(transform.scale.x * 2);
+		glLineWidth(transform.scale.x);
 		glBegin(GL_LINE_LOOP);
 	}
 	
@@ -284,8 +283,11 @@ void Drawing::Rectangle::Draw(float _lastX, float _lastY, bool _fill)
 	glVertex2f(_lastX, transform.position.y);
 	glVertex2f(_lastX, _lastY);
 	glVertex2f(transform.position.x, _lastY);
-	
 	glEnd();
+
+	glFlush();
+	glFinish();
+	glPopAttrib();
 }
 
 /* Triangle Class */
@@ -295,24 +297,29 @@ void Drawing::Triangle::Draw(float _lastX, float _lastY, bool _fill)
 	Object::Draw();
 
 	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+	
+	NormalTriangle(_lastX, _lastY, _fill);
 
-	switch (this->mode)
+	glFlush();
+	glFinish();
+	glPopAttrib();
+}
+
+void Drawing::Triangle::NormalTriangle(float _lastX, float _lastY, bool _fill)
+{
+	if (_fill)
+		glBegin(GL_POLYGON);
+	else
 	{
-	case 0:
-		break;
-	case 1:
-		break;
+		glScalef(1, 1, 1);
+		glLineWidth(transform.scale.x);
+		glBegin(GL_LINE_LOOP);
 	}
-}
+	glVertex2f(transform.position.x, transform.position.y);
+	glVertex2f(secondPos.x, secondPos.y);
+	glVertex2f(_lastX, _lastY);
 
-void Drawing::Triangle::NormalTriangle(float _lastX, float _lastY)
-{
-
-}
-
-void Drawing::Triangle::AngledTriangle(float _lastX, float _lastY)
-{
-
+	glEnd();
 }
 
 

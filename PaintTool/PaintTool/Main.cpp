@@ -48,8 +48,8 @@ unsigned char* imagebuffer; // 이미지 읽고 쓰기 버퍼
 bool isOpen = false;
 unsigned char* imageData; // 이미지 파일
 
-static int windowWidth = 1280; // 윈도우 너비
-static int windowHeight = 960; // 윈도우 높이
+static int windowWidth = 640; // 윈도우 너비
+static int windowHeight = 480; // 윈도우 높이
 
 static int pixelWidth = windowWidth;
 static int pixelHeight = windowHeight;
@@ -58,10 +58,12 @@ static int pixelHeight = windowHeight;
 
 /* 마우스 입력 관려 변수*/
 
-static Vector2 tempPos(320, 240);
-static Vector2 mouseStartPos(320,240);
-static Vector2 mouseLastPos(320,240);
-static const Vector2 CENTER(320, 240);
+static const Vector2 CENTER(windowWidth / 2, windowHeight / 2);
+
+static Vector2 tempPos(CENTER);
+static Vector2 mouseStartPos(CENTER);
+static Vector2 mouseLastPos(CENTER);
+
 
 static bool mouseButtonDown_L = false; // 왼쪽 버튼 UP
 static bool mouseButtonDown_R = false; // 오른쪽 버튼 UP
@@ -108,6 +110,7 @@ static int mode = 0;
 static bool fill_Circle = true;
 static bool fill_Rect = true;
 static bool fill_Tri = true;
+static bool randColor = false;
 static float objectSize = 5;
 
 static Drawing::Point point;
@@ -115,6 +118,7 @@ static Drawing::Line line;
 static Drawing::Circle circle;
 static Drawing::Rectangle rect;
 static Drawing::Triangle triangle;
+static Drawing::Line line1, line2, line3; // 삼각형을 구성할 임시 선
 //static Drawing::TEXT text;
 
 /* 색관련 변수 */
@@ -245,7 +249,6 @@ void PreviewManager()
 			ObjectManager(line, colorMode[0], objectSize); // 오브젝트 설정
 
 			line.transform.position = (Vector3)mouseStartPos;
-			tempPos = mouseLastPos;
 			line.Draw(mouseLastPos.x, mouseLastPos.y);
 		}
 		else if (draging_R)
@@ -253,7 +256,6 @@ void PreviewManager()
 			ObjectManager(line, colorMode[1], objectSize); // 오브젝트 설정
 
 			line.transform.position = (Vector3)mouseStartPos;
-			tempPos = mouseLastPos;
 			line.Draw(mouseLastPos.x, mouseLastPos.y);
 		}
 		else
@@ -316,6 +318,41 @@ void PreviewManager()
 	}
 	case MODE_TRIANGLE:
 	{
+		ObjectManager(point, colorMode[0], 1);
+
+		if (triangle.count == 0 && draging_L)
+		{
+			ObjectManager(line1, colorMode[0], objectSize);
+			ObjectManager(line2, colorMode[0], objectSize);
+			ObjectManager(line3, colorMode[0], objectSize);
+
+			line1.transform.position = (Vector3)mouseStartPos;
+			line1.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+		else if (triangle.count == 0 && draging_R)
+		{
+			ObjectManager(line1, colorMode[1], objectSize);
+			ObjectManager(line2, colorMode[1], objectSize);
+			ObjectManager(line3, colorMode[1], objectSize);
+
+			line1.transform.position = (Vector3)mouseStartPos;
+			line1.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+
+		if (triangle.count == 1)
+		{
+			line2.transform.position = line1.transform.position;
+			line3.transform.position = (Vector3)triangle.secondPos;
+
+			line2.Draw(mouseLastPos.x, mouseLastPos.y);
+			line3.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+		else
+		{
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+
 		break;
 	}
 	case MODE_CHAR:
@@ -364,6 +401,12 @@ void DrawingRoutine()
 
 		if (change)
 		{
+			if (randColor)
+			{
+				colorMode[0] = Color((float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f);
+				colorMode[1] = Color((float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f);
+			}
+
 			WriteImageDatas();
 			change = false;
 		}
@@ -380,11 +423,18 @@ void DrawingRoutine()
 		SwapBuffers(hDC);
 		Sleep(15);
 		break;
+	case MODE_TRIANGLE:
 	case MODE_RECT:
 	case MODE_CIRCLE:
 	case MODE_LINE:
 		if (change)
 		{
+			if (randColor)
+			{
+				colorMode[0] = Color((float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f);
+				colorMode[1] = Color((float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f, (float)(rand() % 256) / 256.0f);
+			}
+
 			WriteImageDatas();
 			change = false;
 		}
@@ -493,6 +543,7 @@ void DrawingManager()
 		}
 		break;
 	}
+	/* 사각형 */
 	case MODE_RECT:
 	{
 		if (mouseButtonDown_L)
@@ -513,8 +564,43 @@ void DrawingManager()
 		}
 		break;
 	}
+	/* 삼각형 */
 	case MODE_TRIANGLE:
 	{
+		/*if (mouseButtonDown_L && triangle.count == 0)
+		{
+			ObjectManager(triangle, colorMode[0], objectSize);
+			triangle.transform.position = (Vector3)mouseStartPos;
+			triangle.PlusCount();
+		}
+		else if (mouseButtonDown_R && triangle.count == 0)
+		{
+			ObjectManager(triangle, colorMode[1], objectSize);
+			triangle.transform.position = (Vector3)mouseStartPos;
+			triangle.PlusCount();
+		}
+
+		if (mouseButtonUp_L && triangle.count == 1)
+		{
+			ObjectManager(triangle, colorMode[0], objectSize);
+			triangle.secondPos = mouseLastPos;
+			triangle.PlusCount();
+		}
+		else if (mouseButtonUp_R && triangle.count == 1)
+		{
+			ObjectManager(triangle, colorMode[1], objectSize);
+			triangle.secondPos = mouseLastPos;
+			triangle.PlusCount();
+		}
+
+		if (!preview && triangle.count == 2 && (mouseButtonDown_R || mouseButtonDown_L))
+		{
+			triangle.Draw(mouseStartPos.x, mouseStartPos.y, fill_Rect);
+			triangle.PlusCount();
+			preview = true;
+			change = true;
+		}*/
+
 		break;
 	}
 	/* 텍스트 */
@@ -624,24 +710,51 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 	case ID_CIRCLE_COORD:
 		mode = MODE_CIRCLE;
 		circle.mode = 0;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
 		return;
 	case ID_CIRCLE_POLAR:
 		mode = MODE_CIRCLE;
 		circle.mode = 1;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
 		return;
 	case ID_CIRCLE_BRESENHAM:
 		mode = MODE_CIRCLE;
 		circle.mode = 2;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
 		return;
 	case ID_RECT:
 		mode = MODE_RECT;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
 		return;
 	case ID_TRI:
 		mode = MODE_TRIANGLE;
-		triangle.mode = 0;
-	case ID_TRIANGLE:
-		mode = MODE_TRIANGLE;
-		triangle.mode = 1;
+		triangle.count = 0;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_CHECKED);
 		/* 텍스트 */
 	case ID_CHAR:
 		mode = MODE_CHAR;
@@ -670,6 +783,14 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 				colorMode[1] = Color(colorChooser.rgbResult);
 			}
 		}
+		return;
+	case ID_COLOR_RAND:
+		randColor = !randColor;
+		if (randColor)
+			CheckMenuItem(hMenu, ID_COLOR_RAND, MF_CHECKED);
+		else
+			CheckMenuItem(hMenu, ID_COLOR_RAND, MF_UNCHECKED);
+		return;
 		return;
 	/* 전체 지우기 */
 	case ID_ALL_CLEAR:
@@ -998,7 +1119,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 			
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
+			if ((mode == MODE_TRIANGLE || mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
 			{
 				preview = false;
 			}
@@ -1015,7 +1136,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R)
+			if ((mode == MODE_TRIANGLE || mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R && !draging_L)
 			{
 				preview = false;
 			}
@@ -1059,7 +1180,7 @@ int WINAPI WinMain(
 		return 0;
 	}
 
-	// 메인 메시지 루프
+	//// 메인 메시지 루프
 	while (!done)
 	{
 		if (PeekMessage(&msg, 0, NULL, NULL, PM_REMOVE))
@@ -1087,26 +1208,25 @@ int WINAPI WinMain(
 				{
 					DrawGLScene();
 				}
-
-				if (keys[VK_F1])                    // F1이 눌렸는지 검사
-				{
-					keys[VK_F1] = FALSE;                // 그렇다면 FALSE로 설정
-					KillGLWindow();                    // 현재 창을 죽인다.
-					fullscreen = !fullscreen;                // 전체화면/창모드 전환
-															 // OpenGL 창을 다시 만든다
-					if (!CreateGLWindow(PROGRAMNAME, pixelWidth, pixelHeight, 16, fullscreen))
-					{
-						return 0;                // 창이 만들어지지 않았다면 종료한다
-					}
-				}
-
-				if (keys[VK_SPACE])
-				{
-					keys[VK_SPACE] = FALSE;
-				}
 			}
 		}
 	}
+
+	//while (GetMessage(&msg, nullptr, 0, 0))
+	//{
+	//	TranslateMessage(&msg);
+	//	DispatchMessage(&msg);
+	//	DrawGLScene();
+	//	if (keys[VK_ESCAPE]) // ESC키를 눌렀는가?
+	//	{
+	//		done = TRUE;
+	//	}
+	//	else
+	//	{
+	//		DrawGLScene();
+	//	}
+	//}
+
 	free(imageData);
 	KillGLWindow(); // 윈도우를 죽임
 	return msg.wParam; // 프로그램 종료
