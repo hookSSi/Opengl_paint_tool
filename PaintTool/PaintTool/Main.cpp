@@ -30,6 +30,7 @@ HGLRC hRC = NULL; // 랜더링 컨텍스트
 HDC hDC = NULL; // GDI 장치 컨텍스트
 HWND hWnd = NULL; // 윈도우 핸들
 HINSTANCE hInstance; // 응용프로그램 인스턴스
+HMENU hMenu = NULL; // 메뉴 인스턴스
 
 bool keys[256]; // 키보드 루틴에 사용하는 배열
 bool active = TRUE; // 윈도우 활성화 플래그, 디폴트값은 TRUE
@@ -47,10 +48,12 @@ unsigned char* imagebuffer; // 이미지 읽고 쓰기 버퍼
 bool isOpen = false;
 unsigned char* imageData; // 이미지 파일
 
-static int pixelWidth = 640;
-static int pixelHeight = 460;
-static int windowWidth = 640; // 윈도우 너비
-static int windowHeight = 480; // 윈도우 높이
+static int windowWidth = 1280; // 윈도우 너비
+static int windowHeight = 960; // 윈도우 높이
+
+static int pixelWidth = windowWidth;
+static int pixelHeight = windowHeight;
+
 
 
 /* 마우스 입력 관려 변수*/
@@ -87,6 +90,11 @@ void WriteImageDatas(); // 이미지 파일 쓰기
 void ObjectManager(Object &object, Color color, float size); // 오브젝트 설정 함수
 void DrawingManager(); // 그리기 함수
 void PreviewManager(); // 미리보기 함수
+void DrawingRoutine(); // 그리기 루틴
+
+
+const int maxObjectSize = 30;
+const int minObjectSize = 1;
 
 const int MODE_POINT = 0; // 점
 const int MODE_LINE = 1; // 선
@@ -94,14 +102,20 @@ const int MODE_CIRCLE = 2; // 원
 const int MODE_RECT = 3; // 사각형
 const int MODE_TRIANGLE = 4; // 삼각형
 const int MODE_ERASER = 5; // 지우개
+const int MODE_CHAR = 6; // 텍스트
 
 static int mode = 0;
-static bool fill = false;
+static bool fill_Circle = true;
+static bool fill_Rect = true;
+static bool fill_Tri = true;
 static float objectSize = 5;
 
 static Drawing::Point point;
 static Drawing::Line line;
 static Drawing::Circle circle;
+static Drawing::Rectangle rect;
+static Drawing::Triangle triangle;
+//static Drawing::TEXT text;
 
 /* 색관련 변수 */
 CHOOSECOLOR colorChooser;
@@ -165,6 +179,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크
 
 	windowWidth = width;
 	windowHeight = height;
+
 	change = true;
 }
 
@@ -191,26 +206,10 @@ int DrawGLScene(GLvoid) // 모든 드로잉을 처리하는 곳
 		isOpen = FALSE;
 		change = TRUE;
 	}
-
 	glFlush();
 	glPopAttrib();
 
-	if (change)
-	{
-		WriteImageDatas();
-		change = false;
-	}
-	else if (preview)
-	{
-		PreviewManager();
-		SwapBuffers(hDC);
-	}
-
-	SwapBuffers(hDC);
-
-	DrawingManager();
-
-	SwapBuffers(hDC);
+	DrawingRoutine();
 
 	return TRUE; // 무사히 마침
 }
@@ -221,89 +220,209 @@ void ObjectManager(Object &object, Color color, float size) // 그릴려는 오브젝트
 	object.transform.scale = Vector3(size,size,0);
 }
 
-void PreviewManager() // 미리보기 출력 함수
+void PreviewManager()
 {
 	glClear(GL_COLOR_BUFFER_BIT); // 미리보기 지우기
-
 	ReadImageDatas(); // 이미지 불러오기
 
 	switch (mode)
 	{
-		case MODE_POINT: // 점
-		{
-			ObjectManager(point, colorMode[0], objectSize);
+	case MODE_POINT:
+	{
+		ObjectManager(point, colorMode[0], objectSize);
 
-			point.transform.position = (Vector3)mouseLastPos;
+		point.transform.position = (Vector3)mouseLastPos;
+		tempPos = mouseLastPos;
+		point.Draw();
+		break;
+	}
+	case MODE_LINE:
+	{
+		ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
+
+		if (draging_L)
+		{
+			ObjectManager(line, colorMode[0], objectSize); // 오브젝트 설정
+
+			line.transform.position = (Vector3)mouseStartPos;
 			tempPos = mouseLastPos;
+			line.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+		else if (draging_R)
+		{
+			ObjectManager(line, colorMode[1], objectSize); // 오브젝트 설정
+
+			line.transform.position = (Vector3)mouseStartPos;
+			tempPos = mouseLastPos;
+			line.Draw(mouseLastPos.x, mouseLastPos.y);
+		}
+		else
+		{
+			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
 		}
 		break;
-		case MODE_LINE: // 선
+	}
+	case MODE_CIRCLE:
+	{
+		ObjectManager(point, colorMode[0], 1);
+
+		if (draging_L)
 		{
-			ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
+			ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
 
-			if (mouseButtonDown_L)
-			{
-				ObjectManager(line, colorMode[0], objectSize); // 오브젝트 설정
-
-				line.transform.position = (Vector3)mouseStartPos;
-				tempPos = mouseLastPos;
-				line.Draw(mouseLastPos.x, mouseLastPos.y);
-			}
-			else if (mouseButtonDown_R)
-			{
-				ObjectManager(line, colorMode[1], objectSize); // 오브젝트 설정
-
-				line.transform.position = (Vector3)mouseStartPos;
-				tempPos = mouseLastPos;
-				line.Draw(mouseLastPos.x, mouseLastPos.y);
-			}
-			else
-			{
-				point.transform.position = (Vector3)mouseLastPos;
-				point.Draw();
-			}
+			circle.transform.position = (Vector3)mouseStartPos;
+			circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
 		}
-		break;
-		case MODE_CIRCLE: // 원
+		else if (draging_R)
 		{
-			ObjectManager(point, colorMode[0], 1);
+			ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
 
-			if (mouseButtonDown_L)
-			{
-				ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
-
-				circle.transform.position = (Vector3)mouseStartPos;
-				tempPos = mouseLastPos;
-				circle.Draw(mouseLastPos.x, mouseLastPos.y,fill);
-			}
-			else if (mouseButtonDown_R)
-			{
-				ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
-
-				circle.transform.position = (Vector3)mouseStartPos;
-				tempPos = mouseLastPos;
-				circle.Draw(mouseLastPos.x, mouseLastPos.y,fill);
-			}
-			else
-			{
-				point.transform.position = (Vector3)mouseLastPos;
-				point.Draw();
-			}
+			circle.transform.position = (Vector3)mouseStartPos;
+			circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
 		}
-		break;
-		case MODE_ERASER: // 지우개
+		else
 		{
-			ObjectManager(point, WHITE, objectSize);
-
 			point.transform.position = (Vector3)mouseLastPos;
-			tempPos = mouseLastPos;
 			point.Draw();
 		}
-		break;		
+		break;
+	}
+	case MODE_RECT:
+	{
+		ObjectManager(point, colorMode[0], 1);
+
+		if (draging_L)
+		{
+			ObjectManager(rect, colorMode[0], objectSize); // 오브젝트 설정
+
+			rect.transform.position = (Vector3)mouseStartPos;
+			rect.Draw(mouseLastPos.x, mouseLastPos.y, fill_Rect);
+		}
+		else if (draging_R)
+		{
+			ObjectManager(rect, colorMode[1], objectSize); // 오브젝트 설정
+
+			rect.transform.position = (Vector3)mouseStartPos;
+			rect.Draw(mouseLastPos.x, mouseLastPos.y, fill_Rect);
+		}
+		else
+		{
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+
+		break;
+	}
+	case MODE_TRIANGLE:
+	{
+		break;
+	}
+	case MODE_CHAR:
+	{
+		//if (draging_L)
+		//{
+		//	ObjectManager(rect, colorMode[0], objectSize); // 오브젝트 설정
+
+		//	circle.transform.position = (Vector3)mouseStartPos;
+		//	circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
+		//}
+		//else if (draging_R)
+		//{
+		//	ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
+
+		//	circle.transform.position = (Vector3)mouseStartPos;
+		//	circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
+		//}
+		//else
+		//{
+		//	point.transform.position = (Vector3)mouseLastPos;
+		//	point.Draw();
+		//}
+		//break;
+	}
+	case MODE_ERASER:
+	{
+		ObjectManager(point, WHITE, objectSize);
+
+		point.transform.position = (Vector3)mouseLastPos;
+		tempPos = mouseLastPos;
+		point.Draw();
+		break;
+	}
 	}
 }
 
+void DrawingRoutine()
+{
+
+	switch (mode)
+	{
+	case MODE_POINT:
+	case MODE_ERASER:
+		DrawingManager();
+
+		if (change)
+		{
+			WriteImageDatas();
+			change = false;
+		}
+		else if (preview)
+		{
+			Sleep(15);
+			PreviewManager();
+			SwapBuffers(hDC);
+		}
+
+		Sleep(15);
+		SwapBuffers(hDC);
+		PreviewManager();
+		SwapBuffers(hDC);
+		Sleep(15);
+		break;
+	case MODE_RECT:
+	case MODE_CIRCLE:
+	case MODE_LINE:
+		if (change)
+		{
+			WriteImageDatas();
+			change = false;
+		}
+		else if (preview)
+		{
+			PreviewManager();
+			SwapBuffers(hDC);
+		}
+
+		Sleep(15);
+		SwapBuffers(hDC);
+		DrawingManager();
+		SwapBuffers(hDC);
+		Sleep(15);
+		break;
+	default:
+		DrawingManager();
+
+		if (change)
+		{
+			WriteImageDatas();
+			change = false;
+		}
+		else if (preview)
+		{
+			Sleep(15);
+			PreviewManager();
+			SwapBuffers(hDC);
+		}
+
+		Sleep(15);
+		SwapBuffers(hDC);
+		PreviewManager();
+		SwapBuffers(hDC);
+		Sleep(15);
+		break;
+	}
+}
 
 void DrawingManager()
 {
@@ -312,18 +431,22 @@ void DrawingManager()
 		/* 점 */
 	case MODE_POINT:
 	{
-		if (mouseButtonDown_L)
+		if (draging_L)
 		{
 			ObjectManager(point, colorMode[0], objectSize);
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
+			preview = false;
+			change = true;
 		}
-		else if (mouseButtonDown_R)
+		else if (draging_R)
 		{
 			ObjectManager(point, colorMode[1], objectSize);
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
-		}			
+			preview = false;
+			change = true;
+		}
 	}
 	break;
 	/* 선 */
@@ -343,6 +466,8 @@ void DrawingManager()
 		if (!preview)
 		{
 			line.Draw(mouseLastPos.x, mouseLastPos.y);
+			preview = true;
+			change = true;
 		}
 	}
 	break;
@@ -351,20 +476,53 @@ void DrawingManager()
 	{
 		if (mouseButtonDown_L)
 		{
-			ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
+			ObjectManager(circle, colorMode[0], objectSize);
 			circle.transform.position = (Vector3)mouseStartPos;
 		}
 		else if (mouseButtonDown_R)
 		{
-			ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
+			ObjectManager(circle, colorMode[1], objectSize);
 			circle.transform.position = (Vector3)mouseStartPos;
+		}
+
+		if (!preview)
+		{
+			circle.Draw(mouseLastPos.x, mouseLastPos.y,fill_Circle);
+			preview = true;
+			change = true;
+		}
+		break;
+	}
+	case MODE_RECT:
+	{
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(rect, colorMode[0], objectSize);
+			rect.transform.position = (Vector3)mouseStartPos;
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(rect, colorMode[1], objectSize);
+			rect.transform.position = (Vector3)mouseStartPos;
 		}
 		if (!preview)
 		{
-			circle.Draw(mouseLastPos.x, mouseLastPos.y, fill);
+			rect.Draw(mouseLastPos.x, mouseLastPos.y, fill_Rect);
+			preview = true;
+			change = true;
 		}
+		break;
 	}
-	break;
+	case MODE_TRIANGLE:
+	{
+		break;
+	}
+	/* 텍스트 */
+	case MODE_CHAR: 
+	{
+
+		break;
+	}
 	/* 지우개 */
 	case MODE_ERASER:
 	{
@@ -374,11 +532,13 @@ void DrawingManager()
 		{
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
+			change = true;
 		}
 	}
 	break;
 	}
 }
+
 
 void MenuManager(WPARAM &wParam, LPARAM &lParam)
 {
@@ -386,6 +546,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 	{
 		/* 파일 */
 	case MENU1_NEWFILE:
+		glClear(GL_COLOR_BUFFER_BIT);
+		WriteImageDatas();
 		return;
 	case MENU1_OPEN:
 		memset(&OFN, 0, sizeof(OPENFILENAME));
@@ -432,40 +594,64 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		/* 점 */
 	case ID_POINT:
 		mode = MODE_POINT;
-		break;
+		return;
 		/* 선 */
 	case ID_LINE:
 		mode = MODE_LINE;
-		break;
+		return;
 		/* 도형 */
 	case ID_CIRCLE_FILL:
-		fill = !fill;
-		break;
+		fill_Circle = !fill_Circle;
+		if (fill_Circle)
+			CheckMenuItem(hMenu, ID_CIRCLE_FILL, MF_CHECKED);
+		else
+			CheckMenuItem(hMenu, ID_CIRCLE_FILL, MF_UNCHECKED);
+		return;
 	case ID_RECT_FILL:
-		fill = !fill;
-		break;
+		fill_Rect = !fill_Rect;
+		if (fill_Rect)
+			CheckMenuItem(hMenu, ID_RECT_FILL, MF_CHECKED);
+		else
+			CheckMenuItem(hMenu, ID_RECT_FILL, MF_UNCHECKED);
+		return;
 	case ID_TRI_FILL:
-		fill = !fill;
-		break;
+		fill_Tri = !fill_Tri;
+		if (fill_Tri)
+			CheckMenuItem(hMenu, ID_TRI_FILL, MF_CHECKED);
+		else
+			CheckMenuItem(hMenu, ID_TRI_FILL, MF_UNCHECKED);
+		return;
 	case ID_CIRCLE_COORD:
 		mode = MODE_CIRCLE;
 		circle.mode = 0;
-		break;
+		return;
 	case ID_CIRCLE_POLAR:
 		mode = MODE_CIRCLE;
 		circle.mode = 1;
-		break;
+		return;
 	case ID_CIRCLE_BRESENHAM:
 		mode = MODE_CIRCLE;
 		circle.mode = 2;
-		break;
+		return;
+	case ID_RECT:
+		mode = MODE_RECT;
+		return;
+	case ID_TRI:
+		mode = MODE_TRIANGLE;
+		triangle.mode = 0;
+	case ID_TRIANGLE:
+		mode = MODE_TRIANGLE;
+		triangle.mode = 1;
+		/* 텍스트 */
+	case ID_CHAR:
+		mode = MODE_CHAR;
+		return;
 		/* 지우개 */
 	case ID_ERASER:
 		mode = MODE_ERASER;
-		break;
+		return;
 		/* 색 */
 	case ID_COLOR_BOX:
-	{
 		ZeroMemory(&colorChooser, sizeof(colorChooser));
 		colorChooser.lStructSize = sizeof(colorChooser);
 		colorChooser.hwndOwner = hWnd;
@@ -484,15 +670,12 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 				colorMode[1] = Color(colorChooser.rgbResult);
 			}
 		}
-	}
-	break;
+		return;
 	/* 전체 지우기 */
 	case ID_ALL_CLEAR:
-	{
 		glClear(GL_COLOR_BUFFER_BIT);
 		WriteImageDatas();
-	}
-		break;
+		return;		
 	}
 }
 
@@ -695,6 +878,8 @@ BOOL CreateGLWindow(LPCWSTR title, int width, int height, int bits, bool fullScr
 		return FALSE;
 	}
 
+	hMenu = GetMenu(hWnd);
+
 	return TRUE; // 성공
 }
 
@@ -763,18 +948,28 @@ LRESULT CALLBACK WndProc(
 		}
 		case WM_LBUTTONDOWN: // 마우스 왼쪽 버튼 누름
 		{
-			mouseStartPos.x = LOWORD(lParam);
-			mouseStartPos.y = windowHeight - HIWORD(lParam);
-			
-			mouseButtonDown_L = TRUE;
+			if (!mouseButtonDown_L)
+			{
+				mouseStartPos.x = LOWORD(lParam);
+				mouseStartPos.y = windowHeight - HIWORD(lParam);
+
+				mouseButtonDown_L = TRUE;
+				mouseButtonUp_L = FALSE;
+			}	
+		
 			return 0;
 		}
 		case WM_RBUTTONDOWN: // 마우스 오른쪽 버튼 누름
 		{
-			mouseStartPos.x = LOWORD(lParam);
-			mouseStartPos.y = windowHeight - HIWORD(lParam);
+			if (!mouseButtonDown_R)
+			{
+				mouseStartPos.x = LOWORD(lParam);
+				mouseStartPos.y = windowHeight - HIWORD(lParam);
 
-			mouseButtonDown_R = TRUE;
+				mouseButtonDown_R = TRUE;
+				mouseButtonUp_R = FALSE;
+			}
+			
 			return 0;
 		}
 		case WM_MOUSEMOVE: // 마우스 움직임
@@ -782,125 +977,59 @@ LRESULT CALLBACK WndProc(
 			mouseLastPos.x = LOWORD(lParam);
 			mouseLastPos.y = windowHeight - HIWORD(lParam);
 
-			if (mode == MODE_POINT)
+			if (mouseButtonDown_L)
 			{
-				if (mouseButtonDown_L) // 마우스 버튼 누름
-				{
-					preview = false;
-					draging_L = TRUE;
-				}
-				else if (mouseButtonDown_R)
-				{
-					preview = false;
-					draging_R = TRUE;
-				}
-				else
-				{
-					preview = true;
-				}
+				draging_L = TRUE;
 			}
-			else if (mode == MODE_LINE)
+			else if (mouseButtonDown_R)
 			{
-				preview = true;
-			}
-			else if (mode = MODE_CIRCLE)
-			{
-				preview = true;
-			}
-			else if (mode == MODE_ERASER)
-			{
-				if (mouseButtonDown_L) // 마우스 버튼 누름
-				{
-					preview = false;
-					draging_L = TRUE;
-				}
-				else if (mouseButtonDown_R)
-				{
-					preview = false;
-					draging_R = TRUE;
-				}
-				else
-				{
-					preview = true;
-				}
+				draging_R = TRUE;
 			}
 
 			return 0;
 		}
 		case WM_LBUTTONUP: // 마우스 왼쪽 버튼 뗌
 		{
-			mouseLastPos.x = LOWORD(lParam);
-			mouseLastPos.y = windowHeight - HIWORD(lParam);
-
-			mouseStartPos.x = LOWORD(lParam);
-			mouseStartPos.y = windowHeight - HIWORD(lParam);
-
-			mouseButtonDown_L = FALSE;
-			draging_L = FALSE;
-
-			if (mode == MODE_POINT)
+			if (mouseButtonDown_L)
+			{
+				mouseButtonDown_L = FALSE;
+				mouseButtonUp_L = TRUE;
+				draging_L = FALSE;
+				preview = true;
+			}
+			
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
 			{
 				preview = false;
 			}
-			else if (mode == MODE_LINE)
-			{
-				preview = false;
-			}
-			else if (mode == MODE_CIRCLE)
-			{
-				preview = false;
-			}
-			else if (mode == MODE_ERASER)
-			{
-				preview = false;
-			}
-
-			if (!preview)
-				change = TRUE;
 
 			return 0;
 		}
 		case WM_RBUTTONUP: // 마우스 오른쪽 버튼 뗌
 		{
-			mouseLastPos.x = LOWORD(lParam);
-			mouseLastPos.y = windowHeight - HIWORD(lParam);
-
-			mouseStartPos.x = LOWORD(lParam);
-			mouseStartPos.y = windowHeight - HIWORD(lParam);
-
-			mouseButtonDown_R = FALSE;
-			draging_R = FALSE;
-
-
-			if (mode == MODE_POINT)
+			if (mouseButtonDown_R)
 			{
-				preview = false;
+				mouseButtonDown_R = FALSE;
+				mouseButtonUp_R = TRUE;
+				draging_R = FALSE;
+				preview = true;
 			}
-			else if (mode == MODE_LINE)
-			{
-				preview = false;
-			}
-			else if (mode == MODE_CIRCLE)
-			{
-				preview = false;
-			}
-			else if (mode == MODE_ERASER)
+
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R)
 			{
 				preview = false;
 			}
 
-			if (!preview)
-				change = TRUE;
 			return 0;
 		}
 		case WM_MOUSEWHEEL:
 		{
-			((short)HIWORD(wParam)<0) ? objectSize-= 0.3f : objectSize+= 0.3f;
+			((short)HIWORD(wParam)<0) ? objectSize-= 0.6f : objectSize+= 0.6f;
 
-			if (objectSize > 10)
-				objectSize = 10;
-			if (objectSize < 1)
-				objectSize = 1;
+			if (objectSize > maxObjectSize)
+				objectSize = (int)objectSize % maxObjectSize;
+			if (objectSize < minObjectSize)
+				objectSize = minObjectSize;
 
 			return 0;
 		}
@@ -925,7 +1054,7 @@ int WINAPI WinMain(
 		fullscreen = FALSE;                        // Windowed Mode
 	}
 
-	if (!CreateGLWindow(PROGRAMNAME, 640, 480, 16, fullscreen))
+	if (!CreateGLWindow(PROGRAMNAME, pixelWidth, pixelHeight, 16, fullscreen))
 	{
 		return 0;
 	}
@@ -965,7 +1094,7 @@ int WINAPI WinMain(
 					KillGLWindow();                    // 현재 창을 죽인다.
 					fullscreen = !fullscreen;                // 전체화면/창모드 전환
 															 // OpenGL 창을 다시 만든다
-					if (!CreateGLWindow(PROGRAMNAME, 640, 480, 16, fullscreen))
+					if (!CreateGLWindow(PROGRAMNAME, pixelWidth, pixelHeight, 16, fullscreen))
 					{
 						return 0;                // 창이 만들어지지 않았다면 종료한다
 					}

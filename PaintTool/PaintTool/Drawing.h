@@ -27,28 +27,38 @@ namespace Drawing
 		virtual void Draw(float _lastX, float _lastY);
 	};
 
-	class TRIANGLE : public Object
+	class Triangle : public Object
 	{
+	private:
+		void NormalTriangle(float _lastX, float _lastY);
+		void AngledTriangle(float _lastX, float _lastY);
 	public:
-		virtual void Draw();
+		int mode;
+
+		Triangle() :Object(), mode(0) {}
+
+		virtual ~Triangle() {}
+
+		virtual void Draw(float _lastX, float _lastY, bool _fill);
 	};
 
 	class Rectangle : public Object
 	{
 	public:
-		Rectangle() :Object() { Rectangle::Rectangle(Vector2(0, 0)); }
-		Rectangle(Vector2 _startPoint) { this->transform.position = (Vector3)_startPoint; }
-		Rectangle(Vector3 _startPoint) { this->transform.position = _startPoint; }
+		Rectangle() :Object(){}
 
 		virtual ~Rectangle() {}
 
-		virtual void Draw(Vector2 endPoint);	
+		virtual void Draw(float _lastX, float _lastY, bool _fill);
 	};
 
 	class Circle : public Object
 	{
 	private:
-		void PolarCoordinate(const float _radius);
+		void PolarCoordinate(Vector2 _centerPos, const float _radius, bool _fill);
+		void RectangularCoordinate(Vector2 _centerPos, const float radius, bool _fill, const float e);
+		void Bresenham(Vector2 _centerPos,const int radius, bool _fill);
+		void CalculatingDiscrit(int &_p, int &_curX, int &_curY, int &_nextX, int &_nextY);
 	public:
 		float radius;
 		int mode;
@@ -61,10 +71,10 @@ namespace Drawing
 		virtual void Draw(float _lastX, float _lastY, bool _fill);
 	};
 
-	class TEXT : public Object
+	class Text : public Object
 	{
 	public:
-		virtual void Draw();
+		virtual void Draw(float _lastX, float _lastY, unsigned char _key);
 	};
 }
 
