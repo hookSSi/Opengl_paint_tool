@@ -320,32 +320,31 @@ void PreviewManager()
 	{
 		ObjectManager(point, colorMode[0], 1);
 
-		if (triangle.count == 0 && draging_L)
+		if (triangle.count == 0 && mouseButtonDown_L)
 		{
 			ObjectManager(line1, colorMode[0], objectSize);
 			ObjectManager(line2, colorMode[0], objectSize);
 			ObjectManager(line3, colorMode[0], objectSize);
 
 			line1.transform.position = (Vector3)mouseStartPos;
-			line1.Draw(mouseLastPos.x, mouseLastPos.y);
 		}
-		else if (triangle.count == 0 && draging_R)
+		else if (triangle.count == 0 && mouseButtonDown_R)
 		{
 			ObjectManager(line1, colorMode[1], objectSize);
 			ObjectManager(line2, colorMode[1], objectSize);
 			ObjectManager(line3, colorMode[1], objectSize);
 
 			line1.transform.position = (Vector3)mouseStartPos;
+		}
+
+		if (triangle.count == 0 && (draging_L || draging_R))
+		{
 			line1.Draw(mouseLastPos.x, mouseLastPos.y);
 		}
 
-		if (triangle.count == 1)
+		if (triangle.count == 1 && (mouseButtonUp_L || mouseButtonUp_R))
 		{
-			line2.transform.position = line1.transform.position;
-			line3.transform.position = (Vector3)triangle.secondPos;
-
-			line2.Draw(mouseLastPos.x, mouseLastPos.y);
-			line3.Draw(mouseLastPos.x, mouseLastPos.y);
+			triangle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Tri);
 		}
 		else
 		{
@@ -450,27 +449,6 @@ void DrawingRoutine()
 		SwapBuffers(hDC);
 		Sleep(15);
 		break;
-	default:
-		DrawingManager();
-
-		if (change)
-		{
-			WriteImageDatas();
-			change = false;
-		}
-		else if (preview)
-		{
-			Sleep(15);
-			PreviewManager();
-			SwapBuffers(hDC);
-		}
-
-		Sleep(15);
-		SwapBuffers(hDC);
-		PreviewManager();
-		SwapBuffers(hDC);
-		Sleep(15);
-		break;
 	}
 }
 
@@ -567,40 +545,28 @@ void DrawingManager()
 	/* 삼각형 */
 	case MODE_TRIANGLE:
 	{
-		/*if (mouseButtonDown_L && triangle.count == 0)
+		if (mouseButtonDown_L && triangle.count == 0)
 		{
 			ObjectManager(triangle, colorMode[0], objectSize);
 			triangle.transform.position = (Vector3)mouseStartPos;
-			triangle.PlusCount();
 		}
 		else if (mouseButtonDown_R && triangle.count == 0)
 		{
 			ObjectManager(triangle, colorMode[1], objectSize);
 			triangle.transform.position = (Vector3)mouseStartPos;
-			triangle.PlusCount();
 		}
 
-		if (mouseButtonUp_L && triangle.count == 1)
+		if (triangle.count == 0 && (draging_L || draging_R))
 		{
-			ObjectManager(triangle, colorMode[0], objectSize);
 			triangle.secondPos = mouseLastPos;
-			triangle.PlusCount();
 		}
-		else if (mouseButtonUp_R && triangle.count == 1)
+		
+		if (triangle.count == 2 && (mouseButtonDown_L || mouseButtonDown_R))
 		{
-			ObjectManager(triangle, colorMode[1], objectSize);
-			triangle.secondPos = mouseLastPos;
+			triangle.Draw(mouseStartPos.x, mouseStartPos.y, fill_Tri);
 			triangle.PlusCount();
-		}
-
-		if (!preview && triangle.count == 2 && (mouseButtonDown_R || mouseButtonDown_L))
-		{
-			triangle.Draw(mouseStartPos.x, mouseStartPos.y, fill_Rect);
-			triangle.PlusCount();
-			preview = true;
 			change = true;
-		}*/
-
+		}
 		break;
 	}
 	/* 텍스트 */
@@ -620,6 +586,8 @@ void DrawingManager()
 			point.Draw();
 			change = true;
 		}
+
+		ObjectManager(triangle, BLACK, objectSize);
 	}
 	break;
 	}
@@ -755,6 +723,7 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_CHECKED);
+		return;
 		/* 텍스트 */
 	case ID_CHAR:
 		mode = MODE_CHAR;
@@ -790,7 +759,6 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 			CheckMenuItem(hMenu, ID_COLOR_RAND, MF_CHECKED);
 		else
 			CheckMenuItem(hMenu, ID_COLOR_RAND, MF_UNCHECKED);
-		return;
 		return;
 	/* 전체 지우기 */
 	case ID_ALL_CLEAR:
@@ -1071,6 +1039,9 @@ LRESULT CALLBACK WndProc(
 		{
 			if (!mouseButtonDown_L)
 			{
+				if (mode == MODE_TRIANGLE && triangle.count == 1)
+					triangle.PlusCount();
+
 				mouseStartPos.x = LOWORD(lParam);
 				mouseStartPos.y = windowHeight - HIWORD(lParam);
 
@@ -1084,6 +1055,9 @@ LRESULT CALLBACK WndProc(
 		{
 			if (!mouseButtonDown_R)
 			{
+				if (mode == MODE_TRIANGLE && triangle.count == 1)
+					triangle.PlusCount();
+
 				mouseStartPos.x = LOWORD(lParam);
 				mouseStartPos.y = windowHeight - HIWORD(lParam);
 
@@ -1107,22 +1081,36 @@ LRESULT CALLBACK WndProc(
 				draging_R = TRUE;
 			}
 
+			if (mode == MODE_TRIANGLE && triangle.count == 0)
+				triangle.count = 0;
+
 			return 0;
 		}
 		case WM_LBUTTONUP: // 마우스 왼쪽 버튼 뗌
 		{
 			if (mouseButtonDown_L)
 			{
+				if(mode == MODE_TRIANGLE && triangle.count == 0 && draging_L)
+					triangle.PlusCount();
+
 				mouseButtonDown_L = FALSE;
 				mouseButtonUp_L = TRUE;
 				draging_L = FALSE;
 				preview = true;
 			}
 			
-			if ((mode == MODE_TRIANGLE || mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
 			{
 				preview = false;
 			}
+			else if (mode == MODE_TRIANGLE)
+			{
+				if(triangle.count == 2)
+					preview = false;
+				else
+					preview = true;
+			}
+
 
 			return 0;
 		}
@@ -1130,16 +1118,27 @@ LRESULT CALLBACK WndProc(
 		{
 			if (mouseButtonDown_R)
 			{
+				if (mode == MODE_TRIANGLE && triangle.count == 0 && draging_R)
+					triangle.PlusCount();
+
 				mouseButtonDown_R = FALSE;
 				mouseButtonUp_R = TRUE;
 				draging_R = FALSE;
 				preview = true;
 			}
 
-			if ((mode == MODE_TRIANGLE || mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R && !draging_L)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R)
 			{
 				preview = false;
 			}
+			else if (mode == MODE_TRIANGLE)
+			{
+				if (triangle.count == 2)
+					preview = false;
+				else
+					preview = true;
+			}
+
 
 			return 0;
 		}
@@ -1148,7 +1147,7 @@ LRESULT CALLBACK WndProc(
 			((short)HIWORD(wParam)<0) ? objectSize-= 0.6f : objectSize+= 0.6f;
 
 			if (objectSize > maxObjectSize)
-				objectSize = (int)objectSize % maxObjectSize;
+				objectSize = maxObjectSize;
 			if (objectSize < minObjectSize)
 				objectSize = minObjectSize;
 

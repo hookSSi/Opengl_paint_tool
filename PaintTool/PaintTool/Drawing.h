@@ -33,7 +33,7 @@ namespace Drawing
 		void NormalTriangle(float _lastX, float _lastY, bool _fill);
 		void AngledTriangle(float _lastX, float _lastY, bool _fill);
 	public:
-		int count;
+		int count = 0;
 		Vector2 secondPos;
 
 		Triangle() :Object(), count(0) { secondPos = Vector2(0, 0); }
