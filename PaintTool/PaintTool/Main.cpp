@@ -45,8 +45,8 @@ static wchar_t lpstrFile1[MAX_PATH_LENGTH]; // 파일 경로 문자열 버퍼
 static wchar_t lpstrFile2[MAX_PATH_LENGTH];
 
 unsigned char* imagebuffer; // 이미지 읽고 쓰기 버퍼
-bool isOpen = false;
 unsigned char* imageData; // 이미지 파일
+bool isOpen = false;
 
 static int windowWidth = 640; // 윈도우 너비
 static int windowHeight = 480; // 윈도우 높이
@@ -593,7 +593,6 @@ void DrawingManager()
 	}
 }
 
-
 void MenuManager(WPARAM &wParam, LPARAM &lParam)
 {
 	switch (LOWORD(wParam))
@@ -726,7 +725,7 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		return;
 		/* 텍스트 */
 	case ID_CHAR:
-		mode = MODE_CHAR;
+		//mode = MODE_CHAR;
 		return;
 		/* 지우개 */
 	case ID_ERASER:
@@ -800,6 +799,9 @@ GLvoid KillGLWindow(GLvoid) // 프로그램이 종료되기 바로 직전 실행됨
 			MessageBox(NULL, TEXT("윈도우즈 클래스의 등록을 해제할 수 없음"), TEXT("종료에러"), MB_OK | MB_ICONINFORMATION);
 			hInstance = NULL; // hInstance를 NULL로 바꿈
 		}
+
+		free(imageData); // 이미지 파일 버퍼 지움
+		free(imagebuffer); // 이미지 버퍼 지움
 	}
 }
 
@@ -1174,7 +1176,7 @@ int WINAPI WinMain(
 		fullscreen = FALSE;                        // Windowed Mode
 	}
 
-	if (!CreateGLWindow(PROGRAMNAME, pixelWidth, pixelHeight, 16, fullscreen))
+	if (!CreateGLWindow(PROGRAMNAME, windowWidth, windowHeight + 20, 16, fullscreen))
 	{
 		return 0;
 	}
@@ -1226,7 +1228,6 @@ int WINAPI WinMain(
 	//	}
 	//}
 
-	free(imageData);
 	KillGLWindow(); // 윈도우를 죽임
 	return msg.wParam; // 프로그램 종료
 }
