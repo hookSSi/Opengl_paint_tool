@@ -11,7 +11,6 @@
 #include <GL/glut.h>
 // OpenGL 유틸리티
 #include<gl/glu.h>
-#include<gl/glut.h>
 // OpenGL 보조 함수들
 #include<gl/glaux.h>
 // stirng 헤더
@@ -23,6 +22,7 @@
 #include "Debug.h"
 #include "Drawing.h"
 #include "Util.h"
+#include "Dithering.h"
 
 const LPCWSTR PROGRAMNAME = TEXT("PaintHook"); // 프로그램 이름
 
@@ -764,6 +764,11 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		glClear(GL_COLOR_BUFFER_BIT);
 		WriteImageDatas();
 		return;		
+	/* 디더링 관련 */
+	case ID_FS_DITHERING:
+		FS_dither(imageData, pixelWidth * 3, pixelHeight);
+		//Ordered_dither(imageData, pixelWidth * 3, pixelHeight);
+		return;
 	}
 }
 
