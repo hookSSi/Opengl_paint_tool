@@ -111,6 +111,7 @@ static bool fill_Circle = true;
 static bool fill_Rect = true;
 static bool fill_Tri = true;
 static bool randColor = false;
+static bool keyboardInputMode = false;
 static float objectSize = 5;
 
 static Drawing::Point point;
@@ -118,7 +119,10 @@ static Drawing::Line line;
 static Drawing::Circle circle;
 static Drawing::Rectangle rect;
 static Drawing::Triangle triangle;
-static Drawing::Line line1, line2, line3; // 삼각형을 구성할 임시 선
+static Drawing::Text text;
+static Drawing::Line line1; // 삼각형 용 라인
+static Drawing::Line line2; // 문자용 라인
+
 //static Drawing::TEXT text;
 
 /* 색관련 변수 */
@@ -130,7 +134,6 @@ const static Color WHITE = Color(1, 1, 1);
 const static Color BLACK = Color(0, 0, 0);
 
 static Color colorMode[2] = { BLACK,WHITE }; // 왼쪽, 오른쪽
-
 
 void ReadImageDatas()
 {
@@ -187,10 +190,45 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // GL 윈도우를 초기화하고 크
 	change = true;
 }
 
+/* 문자열 출력 관련 함수 */
+static GLuint base;
+
+GLvoid BuildFont()
+{
+	HFONT font; // <1>
+	base = glGenLists(96); // <2>
+	font = CreateFont(-24, // <3-1>
+		0,
+		0,
+		0,
+		FW_BOLD, // <3-2>
+		FALSE, // <3-3>
+		FALSE, // <3-4>
+		FALSE, // <3-5>
+		ANSI_CHARSET, // <3-6>
+		OUT_TT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		ANTIALIASED_QUALITY,
+		FF_DONTCARE | DEFAULT_PITCH,
+		TEXT("Courier New")); // <3-6>
+
+	SelectObject(hDC, font); // <4>
+	wglUseFontBitmaps(hDC, 32, 96, base); // <5>
+	text.base = base;
+}
+
+GLvoid KillFont(GLvoid)
+{
+	glDeleteLists(base, 96);
+}
+
+
 int InitGL(GLvoid)
 {
 	ReSizeGLScene(windowWidth, windowHeight);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // 배경색 설정
+
+	BuildFont();
 
 	return TRUE; // 초기화가 무사히 끝났음
 }
@@ -242,8 +280,6 @@ void PreviewManager()
 	}
 	case MODE_LINE:
 	{
-		ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
-
 		if (draging_L)
 		{
 			ObjectManager(line, colorMode[0], objectSize); // 오브젝트 설정
@@ -260,6 +296,7 @@ void PreviewManager()
 		}
 		else
 		{
+			ObjectManager(point, colorMode[0], 1); // 오브젝트 설정			
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
 		}
@@ -267,8 +304,6 @@ void PreviewManager()
 	}
 	case MODE_CIRCLE:
 	{
-		ObjectManager(point, colorMode[0], 1);
-
 		if (draging_L)
 		{
 			ObjectManager(circle, colorMode[0], objectSize); // 오브젝트 설정
@@ -285,6 +320,7 @@ void PreviewManager()
 		}
 		else
 		{
+			ObjectManager(point, colorMode[0], 1);
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
 		}
@@ -292,8 +328,6 @@ void PreviewManager()
 	}
 	case MODE_RECT:
 	{
-		ObjectManager(point, colorMode[0], 1);
-
 		if (draging_L)
 		{
 			ObjectManager(rect, colorMode[0], objectSize); // 오브젝트 설정
@@ -310,6 +344,7 @@ void PreviewManager()
 		}
 		else
 		{
+			ObjectManager(point, colorMode[0], 1);
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
 		}
@@ -318,21 +353,15 @@ void PreviewManager()
 	}
 	case MODE_TRIANGLE:
 	{
-		ObjectManager(point, colorMode[0], 1);
-
 		if (triangle.count == 0 && mouseButtonDown_L)
 		{
 			ObjectManager(line1, colorMode[0], objectSize);
-			ObjectManager(line2, colorMode[0], objectSize);
-			ObjectManager(line3, colorMode[0], objectSize);
 
 			line1.transform.position = (Vector3)mouseStartPos;
 		}
 		else if (triangle.count == 0 && mouseButtonDown_R)
 		{
 			ObjectManager(line1, colorMode[1], objectSize);
-			ObjectManager(line2, colorMode[1], objectSize);
-			ObjectManager(line3, colorMode[1], objectSize);
 
 			line1.transform.position = (Vector3)mouseStartPos;
 		}
@@ -348,6 +377,7 @@ void PreviewManager()
 		}
 		else
 		{
+			ObjectManager(point, colorMode[0], 1);
 			point.transform.position = (Vector3)mouseLastPos;
 			point.Draw();
 		}
@@ -356,26 +386,26 @@ void PreviewManager()
 	}
 	case MODE_CHAR:
 	{
-		//if (draging_L)
-		//{
-		//	ObjectManager(rect, colorMode[0], objectSize); // 오브젝트 설정
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(text, colorMode[0], objectSize);
+			text.transform.position = (Vector3)mouseStartPos;
+			keyboardInputMode = true;
+		}
 
-		//	circle.transform.position = (Vector3)mouseStartPos;
-		//	circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
-		//}
-		//else if (draging_R)
-		//{
-		//	ObjectManager(circle, colorMode[1], objectSize); // 오브젝트 설정
+		if (!keys[VK_RETURN])
+		{
+			if (keyboardInputMode)
+			{
+				text.Draw();
+			}
+		}
+		else if(keys[VK_RETURN])
+		{
+			keyboardInputMode = false;
+		}
 
-		//	circle.transform.position = (Vector3)mouseStartPos;
-		//	circle.Draw(mouseLastPos.x, mouseLastPos.y, fill_Circle);
-		//}
-		//else
-		//{
-		//	point.transform.position = (Vector3)mouseLastPos;
-		//	point.Draw();
-		//}
-		//break;
+		break;
 	}
 	case MODE_ERASER:
 	{
@@ -426,6 +456,7 @@ void DrawingRoutine()
 	case MODE_RECT:
 	case MODE_CIRCLE:
 	case MODE_LINE:
+	case MODE_CHAR:
 		if (change)
 		{
 			if (randColor)
@@ -572,7 +603,13 @@ void DrawingManager()
 	/* 텍스트 */
 	case MODE_CHAR: 
 	{
-
+		if (!keyboardInputMode && keys[VK_RETURN])
+		{
+			text.Draw();
+			text.textList.clear();
+			keyboardInputMode = false;
+			change = true;
+		}
 		break;
 	}
 	/* 지우개 */
@@ -593,6 +630,26 @@ void DrawingManager()
 	}
 }
 
+// 키보드 입력 매니저 함수
+void KeyboardInputManager(WPARAM &wParam)
+{
+	if (!keyboardInputMode && mode == MODE_CHAR && !keys[VK_RETURN])
+		keyboardInputMode = true;
+
+	if (mode == MODE_CHAR && keys[VK_BACK])
+	{
+		text.DeleteChar();
+	}
+	else if (mode == MODE_CHAR && keyboardInputMode)
+	{
+		unsigned char ch = MapVirtualKey(wParam, MAPVK_VK_TO_CHAR);
+		if (ch == 229) // 한글 입력 제외
+			return;
+		text.AddChar(ch);
+	}
+}
+
+// 메뉴 매니저 함수
 void MenuManager(WPARAM &wParam, LPARAM &lParam)
 {
 	switch (LOWORD(wParam))
@@ -725,7 +782,7 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		return;
 		/* 텍스트 */
 	case ID_CHAR:
-		//mode = MODE_CHAR;
+		mode = MODE_CHAR;
 		return;
 		/* 지우개 */
 	case ID_ERASER:
@@ -800,8 +857,6 @@ GLvoid KillGLWindow(GLvoid) // 프로그램이 종료되기 바로 직전 실행됨
 			hInstance = NULL; // hInstance를 NULL로 바꿈
 		}
 
-		free(imageData); // 이미지 파일 버퍼 지움
-		free(imagebuffer); // 이미지 버퍼 지움
 	}
 }
 
@@ -1013,13 +1068,17 @@ LRESULT CALLBACK WndProc(
 		}
 		case WM_CLOSE: // 윈도우가 닫히는 중임
 		{
+			KillFont();
+			free(imageData); // 이미지 파일 버퍼 지움
+			free(imagebuffer); // 이미지 버퍼 지움
+
 			PostQuitMessage(0); // 종료 메시지를 보냄
 			return 0;
 		}
 		case WM_KEYDOWN: // 키가 눌리고 있는 경우
 		{
 			keys[wParam] = TRUE;
-
+			KeyboardInputManager(wParam);
 			return 0;
 		}
 		case WM_COMMAND:
@@ -1044,12 +1103,17 @@ LRESULT CALLBACK WndProc(
 				if (mode == MODE_TRIANGLE && triangle.count == 1)
 					triangle.PlusCount();
 
+				if (mode == MODE_CHAR)
+				{
+					preview = true;
+				}
+
 				mouseStartPos.x = LOWORD(lParam);
 				mouseStartPos.y = windowHeight - HIWORD(lParam);
 
 				mouseButtonDown_L = TRUE;
 				mouseButtonUp_L = FALSE;
-			}	
+			}
 		
 			return 0;
 		}
@@ -1092,7 +1156,7 @@ LRESULT CALLBACK WndProc(
 		{
 			if (mouseButtonDown_L)
 			{
-				if(mode == MODE_TRIANGLE && triangle.count == 0 && draging_L)
+				if (mode == MODE_TRIANGLE && triangle.count == 0 && draging_L)
 					triangle.PlusCount();
 
 				mouseButtonDown_L = FALSE;
@@ -1100,19 +1164,18 @@ LRESULT CALLBACK WndProc(
 				draging_L = FALSE;
 				preview = true;
 			}
-			
+
 			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
 			{
 				preview = false;
 			}
 			else if (mode == MODE_TRIANGLE)
 			{
-				if(triangle.count == 2)
+				if (triangle.count == 2)
 					preview = false;
 				else
 					preview = true;
 			}
-
 
 			return 0;
 		}

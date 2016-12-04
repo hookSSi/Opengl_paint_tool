@@ -10,6 +10,9 @@
 #include<gl/glaux.h>
 // 수학 관련 함수들
 #include<math.h>
+// 리스트
+#include<list>
+
 
 #include "Object.h"
 
@@ -76,7 +79,15 @@ namespace Drawing
 	class Text : public Object
 	{
 	public:
-		virtual void Draw(float _lastX, float _lastY, unsigned char _key);
+		std::list<unsigned char> textList;
+		int length = textList.size();
+		int base = 0;
+
+		GLvoid glPrint(const char *text);
+		virtual void Draw();
+		bool AddChar(unsigned char& ch);
+		bool DeleteChar();
+		virtual ~Text() { textList.~list(); }
 	};
 }
 

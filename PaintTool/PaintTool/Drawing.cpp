@@ -12,6 +12,7 @@ const float  DegToRad(const float degree)
 	return degree * PI / 180;
 }
 
+
 /* Point Class */
 void Drawing::Point::Draw()
 {
@@ -39,7 +40,6 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 {
 	Object::Draw();
 
-	glScalef(1, 1, 1);
 	glLineWidth(transform.scale.x);
 
 	glBegin(GL_LINES);
@@ -60,7 +60,9 @@ void Drawing::Line::Draw(float _lastX, float _lastY)
 void Drawing::Circle::RectangularCoordinate(Vector2 _centerPos, const float radius, bool _fill ,const float e)
 {
 	if (_fill)
+	{
 		glBegin(GL_POLYGON);
+	}
 	else
 	{
 		glBegin(GL_LINE_LOOP);
@@ -325,12 +327,53 @@ void Drawing::Triangle::NormalTriangle(float _lastX, float _lastY, bool _fill)
 
 /* Text Class */
 
-void Drawing::Text::Draw(float _lastX, float _lastY, unsigned char _key)
+bool Drawing::Text::AddChar(unsigned char& ch)
 {
-	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+	length = textList.size();
+	textList.push_back(ch);
+}
+bool Drawing::Text::DeleteChar()
+{
+	textList.pop_back();
+}
 
-	glRasterPos2i(center.x, center.y);
-	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, _key);
-	/*glutStrokeCharacter(GLUT_STROKE_ROMAN,i); */
-	center.x += glutBitmapWidth(GLUT_BITMAP_9_BY_15, _key);
+
+GLvoid Drawing::Text::glPrint(const char *text)
+{
+	glPushAttrib(GL_LIST_BIT);
+	glListBase(base - 32);
+	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+	glPopAttrib();
+}
+
+void Drawing::Text::Draw()
+{
+	Object::Draw();
+
+	float tempX = transform.position.x;
+	float tempY = transform.position.y;
+
+	int i = 0;
+
+	char buffer[255] = { 0 };
+
+
+	for (std::list<unsigned char>::iterator iter = textList.begin(); iter != textList.end(); ++iter)
+	{
+		
+		if (textList.size() == 0)
+			break;
+		else
+		{
+			buffer[i] = *iter;
+		}
+		i++;
+	}
+
+	glRasterPos2i(transform.position.x, transform.position.y);
+	glPrint(buffer);
+
+	glFlush();
+	glFinish();
+	glPopAttrib();
 }
