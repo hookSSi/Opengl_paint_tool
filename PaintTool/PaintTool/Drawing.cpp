@@ -1,6 +1,7 @@
 #include "Drawing.h"
 
 const float PI = 3.1415926535897932384626433832795;
+const float GOLDEN_RATIO = 2.4;
 
 const float RadToDeg(const float radian)
 {
@@ -74,14 +75,14 @@ void Drawing::Circle::RectangularCoordinate(Vector2 _centerPos, const float radi
 	{
 		for (GLfloat y = _centerPos.y; y < _centerPos.y + radius; y += 0.1)
 		{
-			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			if ((radius - e) * (radius - e) <= ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) && ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) <= (radius + e) * (radius + e))
 			{
 				glVertex2f(x, y);
 			}
 		}
 		for (GLfloat y = _centerPos.y + radius; y >= _centerPos.y; y -= 0.1)
 		{
-			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			if ((radius - e) * (radius - e) <= ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) && ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) <= (radius + e) * (radius + e))
 			{
 				glVertex2f(x, y);
 			}
@@ -91,14 +92,14 @@ void Drawing::Circle::RectangularCoordinate(Vector2 _centerPos, const float radi
 	{
 		for (GLfloat y = _centerPos.y; y > _centerPos.y - radius; y -= 0.1)
 		{
-			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			if ((radius - e) * (radius - e) <= ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) && ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) <= (radius + e) * (radius + e))
 			{
 				glVertex2f(x, y);
 			}
 		}
 		for (GLfloat y = _centerPos.y - radius; y <= _centerPos.y; y += 0.5)
 		{
-			if (((pow(radius - e, 2)) <= (pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2))) && ((pow(x - _centerPos.x, 2) + pow(y - _centerPos.y, 2)) <= (pow(radius + e, 2))))
+			if ((radius - e) * (radius - e) <= ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) && ((x - _centerPos.x) * (x - _centerPos.x) + (y - _centerPos.y) *(y - _centerPos.y)) <= (radius + e) * (radius + e))
 			{
 				glVertex2f(x, y);
 			}
@@ -379,13 +380,214 @@ void Drawing::Text::Draw()
 }
 
 /* Heart Class */
+void Drawing::Heart::GenerateHeart(float _lastX, float _lastY, bool _fill)
+{
+	float disX = abs(transform.position.x - _lastX) / 2; // 가로 거리
+	float disY = abs(transform.position.y - _lastY) / 2; // 세로 거리
+
+	float tempX = 0, tempY = 0; // 방정식 계산 결과
+	float angle = 0;
+
+	if (_fill)
+		glBegin(GL_POLYGON);
+	else
+	{
+		glBegin(GL_POINTS);
+	}
+	for (int t = 0; t < 360; t += 1)
+	{
+		angle = DegToRad(t);
+		tempX = 16 * sin(t)* sin(t)* sin(t);
+		tempY = 13 * cos(t) - 5 * cos(2 * t) - 2 * cos(t * 3) - cos(4 * t);
+
+		tempX *= disX;
+		tempY *= disY;
+
+		glVertex2f(tempX + transform.position.x, tempY + transform.position.y);
+	}
+	glEnd();
+}
+
 void Drawing::Heart::Draw(float _lastX, float _lastY, bool _fill)
 {
 	Object::Draw();
 
-	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+	GenerateHeart(_lastX, _lastY, _fill);
 
-	//NormalTriangle(_lastX, _lastY, _fill);
+	glFlush();
+	glFinish();
+	glPopAttrib();
+}
+
+/* Star Class */
+
+void Drawing::Star::GenerateCircle(float _lastX, float _lastY)
+{
+	GLfloat angle;
+	GLfloat curX = 0, curY = 0;
+	int count = 0;
+
+	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+	float radius = abs(transform.position.x - _lastX) / 2; // 지름
+
+
+	glBegin(GL_LINE_LOOP);
+	glScalef(1, 1, 1);
+	glLineWidth(transform.scale.x);
+
+	for (int i = 0; i <= 360; i += 1)
+	{
+		angle = DegToRad(i);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+
+		glVertex2f(curX, curY);
+	}
+	glEnd();
+}
+
+void Drawing::Star::GenerateStar(float _lastX, float _lastY, bool _fill)
+{
+	GLfloat angle;
+	GLfloat curX = 0, curY = 0;
+	int count = 0;
+
+	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+	float radius = abs(transform.position.x - _lastX) / 2; // 지름
+
+
+	float error = 52;
+
+	if (_fill)
+	{
+		float small_Radius = radius / GOLDEN_RATIO; // 작은 지름
+
+		glBegin(GL_POLYGON);
+		// 1
+
+		angle = DegToRad(0 - 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(0 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(0 + 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		// 2
+		angle = DegToRad(72 - 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(72 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(72 + 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		// 3
+		angle = DegToRad(144 - 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(144 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(144 + 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+
+		// 4
+		angle = DegToRad(216 - 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(216 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(216 + 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		// 5
+		angle = DegToRad(288 - 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(288 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		angle = DegToRad(288 + 36 - error);
+		curX = center.x + cos(angle) * small_Radius;
+		curY = center.y + sin(angle) * small_Radius;
+		glVertex2f(curX, curY);
+	}
+	else
+	{
+		glBegin(GL_LINE_LOOP);
+		// 1
+		angle = DegToRad(0 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		// 2
+		angle = DegToRad(216 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		// 3
+		angle = DegToRad(72 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		// 4
+		angle = DegToRad(288 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+
+		// 5
+		angle = DegToRad(144 - error);
+		curX = center.x + cos(angle) * radius;
+		curY = center.y + sin(angle) * radius;
+		glVertex2f(curX, curY);
+	}
+
+	glEnd();
+}
+
+void Drawing::Star::Draw(float _lastX, float _lastY, bool _fill)
+{
+	Object::Draw();
+
+	GenerateCircle(_lastX, _lastY);
+	GenerateStar(_lastX, _lastY, _fill);
 
 	glFlush();
 	glFinish();

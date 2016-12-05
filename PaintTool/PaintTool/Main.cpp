@@ -105,11 +105,14 @@ const int MODE_RECT = 3; // 사각형
 const int MODE_TRIANGLE = 4; // 삼각형
 const int MODE_ERASER = 5; // 지우개
 const int MODE_CHAR = 6; // 텍스트
+const int MODE_HEART = 7; // 기타 도형
+const int MODE_STAR = 8;
 
 static int mode = 0;
 static bool fill_Circle = true;
 static bool fill_Rect = true;
 static bool fill_Tri = true;
+static bool fill_ETC = true;
 static bool randColor = false;
 static bool keyboardInputMode = false;
 static float objectSize = 5;
@@ -121,7 +124,8 @@ static Drawing::Rectangle rect;
 static Drawing::Triangle triangle;
 static Drawing::Text text;
 static Drawing::Line line1; // 삼각형 용 라인
-static Drawing::Line line2; // 문자용 라인
+static Drawing::Heart heart;
+static Drawing::Star star;
 
 //static Drawing::TEXT text;
 
@@ -416,6 +420,54 @@ void PreviewManager()
 		point.Draw();
 		break;
 	}
+	case MODE_HEART:
+	{
+		if (draging_L)
+		{
+			ObjectManager(heart, colorMode[0], objectSize); // 오브젝트 설정
+
+			heart.transform.position = (Vector3)mouseStartPos;
+			heart.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+		}
+		else if (draging_R)
+		{
+			ObjectManager(heart, colorMode[1], objectSize); // 오브젝트 설정
+
+			heart.transform.position = (Vector3)mouseStartPos;
+			heart.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+		}
+		else
+		{
+			ObjectManager(point, colorMode[0], 1);
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+		break;
+	}
+	case MODE_STAR:
+	{
+		if (draging_L)
+		{
+			ObjectManager(star, colorMode[0], objectSize); // 오브젝트 설정
+
+			star.transform.position = (Vector3)mouseStartPos;
+			star.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+		}
+		else if (draging_R)
+		{
+			ObjectManager(star, colorMode[1], objectSize); // 오브젝트 설정
+
+			star.transform.position = (Vector3)mouseStartPos;
+			star.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+		}
+		else
+		{
+			ObjectManager(point, colorMode[0], 1);
+			point.transform.position = (Vector3)mouseLastPos;
+			point.Draw();
+		}
+		break;
+	}
 	}
 }
 
@@ -424,9 +476,7 @@ void DrawingRoutine()
 
 	switch (mode)
 	{
-	case MODE_POINT:
-	case MODE_ERASER:
-		DrawingManager();
+		/*DrawingManager();
 
 		if (change)
 		{
@@ -451,7 +501,11 @@ void DrawingRoutine()
 		PreviewManager();
 		SwapBuffers(hDC);
 		Sleep(15);
-		break;
+		break;*/
+	case MODE_POINT:
+	case MODE_STAR:
+	case MODE_HEART:
+	case MODE_ERASER:
 	case MODE_TRIANGLE:
 	case MODE_RECT:
 	case MODE_CIRCLE:
@@ -490,7 +544,7 @@ void DrawingManager()
 		/* 점 */
 	case MODE_POINT:
 	{
-		if (draging_L)
+		if (draging_L || mouseButtonDown_L)
 		{
 			ObjectManager(point, colorMode[0], objectSize);
 			point.transform.position = (Vector3)mouseLastPos;
@@ -498,7 +552,7 @@ void DrawingManager()
 			preview = false;
 			change = true;
 		}
-		else if (draging_R)
+		else if (draging_R || mouseButtonDown_R)
 		{
 			ObjectManager(point, colorMode[1], objectSize);
 			point.transform.position = (Vector3)mouseLastPos;
@@ -627,6 +681,44 @@ void DrawingManager()
 		ObjectManager(triangle, BLACK, objectSize);
 	}
 	break;
+	/* 기타 도형들 */
+	case MODE_HEART:
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(heart, colorMode[0], objectSize);
+			heart.transform.position = (Vector3)mouseStartPos;
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(heart, colorMode[1], objectSize);
+			heart.transform.position = (Vector3)mouseStartPos;
+		}
+		if (!preview)
+		{
+			heart.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+			preview = true;
+			change = true;
+		}
+		break;
+	case MODE_STAR:
+		if (mouseButtonDown_L)
+		{
+			ObjectManager(star, colorMode[0], objectSize);
+			star.transform.position = (Vector3)mouseStartPos;
+		}
+		else if (mouseButtonDown_R)
+		{
+			ObjectManager(star, colorMode[1], objectSize);
+			star.transform.position = (Vector3)mouseStartPos;
+		}
+
+		if (!preview)
+		{
+			star.Draw(mouseLastPos.x, mouseLastPos.y, fill_ETC);
+			preview = true;
+			change = true;
+		}
+		break;
 	}
 }
 
@@ -731,6 +823,13 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		else
 			CheckMenuItem(hMenu, ID_TRI_FILL, MF_UNCHECKED);
 		return;
+	case ID_FILL_ETC:
+		fill_ETC = !fill_ETC;
+		if (fill_ETC)
+			CheckMenuItem(hMenu, ID_FILL_ETC, MF_CHECKED);
+		else
+			CheckMenuItem(hMenu, ID_FILL_ETC, MF_UNCHECKED);
+		return;
 	case ID_CIRCLE_COORD:
 		mode = MODE_CIRCLE;
 		circle.mode = 0;
@@ -740,6 +839,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
 		return;
 	case ID_CIRCLE_POLAR:
 		mode = MODE_CIRCLE;
@@ -750,6 +851,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
 		return;
 	case ID_CIRCLE_BRESENHAM:
 		mode = MODE_CIRCLE;
@@ -760,6 +863,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_CHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
 		return;
 	case ID_RECT:
 		mode = MODE_RECT;
@@ -769,6 +874,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_CHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
 		return;
 	case ID_TRI:
 		mode = MODE_TRIANGLE;
@@ -779,6 +886,8 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
 		CheckMenuItem(hMenu, ID_TRI, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
 		return;
 		/* 텍스트 */
 	case ID_CHAR:
@@ -828,6 +937,27 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		return;
 	case ID_RGB_BGR:
 		RGB_BGR_Trans(imageData, pixelWidth * 3, pixelHeight);
+		return;
+	case ID_HEART:
+		mode = MODE_HEART;
+
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_UNCHECKED);
+		return;
+	case ID_STAR:
+		mode = MODE_STAR;
+		CheckMenuItem(hMenu, ID_CIRCLE_COORD, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_POLAR, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CIRCLE_BRESENHAM, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_RECT, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_TRI, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_HEART, MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_STAR, MF_CHECKED);
 		return;
 	}
 }
@@ -1173,7 +1303,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT) && !draging_L)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR) && !draging_L)
 			{
 				preview = false;
 			}
@@ -1200,7 +1330,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT)  && !draging_R)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR)  && !draging_R)
 			{
 				preview = false;
 			}

@@ -92,10 +92,25 @@ namespace Drawing
 
 	class Heart : public Object
 	{
+	private:
+		void GenerateHeart(float _lastX, float _lastY, bool _fill);
 	public:
 		Heart() :Object() {}
 
 		virtual ~Heart() {}
+
+		virtual void Draw(float _lastX, float _lastY, bool _fill);
+	};
+
+	class Star : public Object
+	{
+	private:
+		void GenerateCircle(float _lastX, float _lastY);
+		void GenerateStar(float _lastX, float _lastY, bool _fill);
+	public:
+		Star() :Object() {}
+
+		virtual ~Star() {}
 
 		virtual void Draw(float _lastX, float _lastY, bool _fill);
 	};
