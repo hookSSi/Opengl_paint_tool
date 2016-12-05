@@ -156,7 +156,7 @@
     <ClInclude Include="Button.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Debug.h" />
-    <ClInclude Include="Dithering.h" />
+    <ClInclude Include="Transformation.h" />
     <ClInclude Include="Drawing.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="Layer.h" />

@@ -1,5 +1,5 @@
-#ifndef  __DITHERING_H_
-#define __DITHERING_H_
+#ifndef  __TRANSFORMATION_H_
+#define __TRANSFORMATION_H_
 #include<math.h>
 
 float fs_coeffs[4] = {7.0 / 16.0, 3.0 / 16.0, 5.0 / 16.0, 1.0 / 16.0};
@@ -46,21 +46,17 @@ void FS_dither(unsigned char* imageData, int width, int height)
 	}
 }
 
-void Ordered_dither(unsigned char* imageData, int width, int height)
+
+void RGB_BGR_Trans(unsigned char* imageData, int width, int height)
 {
-	float oldPixel = 0;
-	float newPixel = 0;
+	int size = width * height;
+	unsigned char tempRGB;
 
-	for (int i = 0; i < height; i++)
+	for (int imageIdx = 0; imageIdx < size; imageIdx += 3)
 	{
-		for (int j = 0; j < width; j++)
-		{
-
-			oldPixel = imageData[i * width + j] + (imageData[i * width + j] * threshold_map_2x2[i % 2][j % 2]);
-			newPixel = Find_Closest_Color(oldPixel);
-			imageData[i * width + j] = newPixel;
-
-		}
+		tempRGB = imageData[imageIdx];
+		imageData[imageIdx] = imageData[imageIdx + 2];
+		imageData[imageIdx + 2] = tempRGB;
 	}
 }
 

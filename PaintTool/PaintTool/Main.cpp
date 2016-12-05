@@ -22,7 +22,7 @@
 #include "Debug.h"
 #include "Drawing.h"
 #include "Util.h"
-#include "Dithering.h"
+#include "Transformation.h"
 
 const LPCWSTR PROGRAMNAME = TEXT("PaintHook"); // 프로그램 이름
 
@@ -821,10 +821,13 @@ void MenuManager(WPARAM &wParam, LPARAM &lParam)
 		glClear(GL_COLOR_BUFFER_BIT);
 		WriteImageDatas();
 		return;		
-	/* 디더링 관련 */
+	/* 변환 관련 */
 	case ID_FS_DITHERING:
 		FS_dither(imageData, pixelWidth * 3, pixelHeight);
 		//Ordered_dither(imageData, pixelWidth * 3, pixelHeight);
+		return;
+	case ID_RGB_BGR:
+		RGB_BGR_Trans(imageData, pixelWidth * 3, pixelHeight);
 		return;
 	}
 }

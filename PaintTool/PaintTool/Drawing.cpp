@@ -377,3 +377,17 @@ void Drawing::Text::Draw()
 	glFinish();
 	glPopAttrib();
 }
+
+/* Heart Class */
+void Drawing::Heart::Draw(float _lastX, float _lastY, bool _fill)
+{
+	Object::Draw();
+
+	Vector2 center((transform.position.x + _lastX) / 2, (transform.position.y + _lastY) / 2);
+
+	//NormalTriangle(_lastX, _lastY, _fill);
+
+	glFlush();
+	glFinish();
+	glPopAttrib();
+}

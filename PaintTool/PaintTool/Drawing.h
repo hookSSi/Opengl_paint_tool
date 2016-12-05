@@ -89,6 +89,16 @@ namespace Drawing
 		bool DeleteChar();
 		virtual ~Text() { textList.~list(); }
 	};
+
+	class Heart : public Object
+	{
+	public:
+		Heart() :Object() {}
+
+		virtual ~Heart() {}
+
+		virtual void Draw(float _lastX, float _lastY, bool _fill);
+	};
 }
 
 #endif

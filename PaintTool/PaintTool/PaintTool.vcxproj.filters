@@ -74,7 +74,7 @@
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dithering.h">
+    <ClInclude Include="Transformation.h">
       <Filter>Header Files\Dithering</Filter>
     </ClInclude>
   </ItemGroup>
