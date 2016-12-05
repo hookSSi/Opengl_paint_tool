@@ -28,6 +28,9 @@
     <Filter Include="Source Files\Drawing">
       <UniqueIdentifier>{1c2a9b30-da9e-4b63-8ff4-190c3de4fcfe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Dithering">
+      <UniqueIdentifier>{8c0c37ca-beec-437c-af98-f57c13a01aaf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Opengl_paint_tool.rc">
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dithering.h">
+      <Filter>Header Files\Dithering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
