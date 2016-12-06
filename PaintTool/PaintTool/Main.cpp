@@ -279,6 +279,7 @@ void PreviewManager()
 
 		point.transform.position = (Vector3)mouseLastPos;
 		tempPos = mouseLastPos;
+
 		point.Draw();
 		break;
 	}
@@ -476,7 +477,9 @@ void DrawingRoutine()
 
 	switch (mode)
 	{
-		/*DrawingManager();
+	case MODE_ERASER:
+	case MODE_POINT:
+		DrawingManager();
 
 		if (change)
 		{
@@ -501,11 +504,9 @@ void DrawingRoutine()
 		PreviewManager();
 		SwapBuffers(hDC);
 		Sleep(15);
-		break;*/
-	case MODE_POINT:
+		break;
 	case MODE_STAR:
 	case MODE_HEART:
-	case MODE_ERASER:
 	case MODE_TRIANGLE:
 	case MODE_RECT:
 	case MODE_CIRCLE:
@@ -1303,7 +1304,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR) && !draging_L)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR || mode == MODE_POINT) && !draging_L)
 			{
 				preview = false;
 			}
@@ -1330,7 +1331,7 @@ LRESULT CALLBACK WndProc(
 				preview = true;
 			}
 
-			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR)  && !draging_R)
+			if ((mode == MODE_LINE || mode == MODE_CIRCLE || mode == MODE_RECT || mode == MODE_HEART || mode == MODE_STAR || mode == MODE_POINT)  && !draging_R)
 			{
 				preview = false;
 			}
